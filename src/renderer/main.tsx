@@ -1,0 +1,28 @@
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { App } from './App';
+import { Dashboard } from './pages/Dashboard';
+import { Configuration } from './pages/Configuration';
+import { KnowledgeBase } from './pages/KnowledgeBase';
+import { AgentBuilder } from './pages/AgentBuilder';
+import { MyAgents } from './pages/MyAgents';
+import './styles/globals.css';
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <HashRouter>
+      <Routes>
+        <Route path="/" element={<App />}>
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="configuration" element={<Configuration />} />
+          <Route path="knowledge" element={<KnowledgeBase />} />
+          <Route path="agents" element={<MyAgents />} />
+          <Route path="agents/new" element={<AgentBuilder />} />
+          <Route path="agents/:id" element={<AgentBuilder />} />
+        </Route>
+      </Routes>
+    </HashRouter>
+  </React.StrictMode>
+);
