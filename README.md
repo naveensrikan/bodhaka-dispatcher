@@ -1,16 +1,28 @@
-# Student Agent Builder
+# Student Agent Builder v0.2
 
 A desktop app for students to build their own AI agents with a visual drag-and-drop canvas.
 Bring your own API key, upload study material, and design workflows that run on a schedule
-or on-demand — daily chapter summaries, research digests, quiz generators, and more.
+or on-demand — daily chapter summaries, research digests, quiz generators, motivational
+nudges, and more.
+
+## What's New in v0.2
+
+- **Native Windows 11 look** — Segoe UI, Fluent colors, light/dark theme toggle
+- **Templates gallery** — 4 ready-made agents you can use in one click
+- **Run History page** — see every agent run with full logs and outputs
+- **Toast notifications** — clear feedback for every action (save, run, error)
+- **Fixed PDF upload** — uses native Windows file dialog now
+- **Logic nodes** — If/Else and Delay for more sophisticated workflows
+- **Web Search node** — uses Anthropic's built-in web search when you're on Claude
+- **Better agent inspector** — "use my email" quick-fill, better defaults
 
 ## Features
 
-- **BYOK** — bring your own Anthropic or OpenAI API key, model picker with recommendations
-- **Knowledge Base** — upload PDFs, DOCX, TXT, MD. Files are chunked and embedded locally (SQLite + OpenAI embeddings)
-- **Visual Agent Builder** — React Flow canvas. Drag blocks: Triggers, Sources, AI, Outputs. Connect them.
+- **BYOK** — bring your own Anthropic or OpenAI API key
+- **Knowledge Base** — upload PDFs, DOCX, TXT, MD. Files are chunked, embedded, and searchable locally
+- **Visual Agent Builder** — React Flow canvas with categorized building blocks
 - **Scheduled Execution** — agents run on cron schedules in the background
-- **Real Outputs** — actually sends email via your SMTP (Gmail app password supported)
+- **Real Outputs** — sends real email via your SMTP credentials
 - **Local-first** — all data, keys, and embeddings stay on your machine
 
 ## Architecture

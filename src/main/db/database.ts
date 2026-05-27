@@ -19,7 +19,6 @@ export async function initDatabase() {
   db.pragma('journal_mode = WAL');
   db.pragma('foreign_keys = ON');
 
-  // Schema
   db.exec(`
     CREATE TABLE IF NOT EXISTS config (
       key TEXT PRIMARY KEY,
@@ -47,6 +46,14 @@ export async function initDatabase() {
       logs TEXT,
       output TEXT,
       error TEXT,
+      cost REAL DEFAULT 0,
+      FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS agent_memory (
+      agent_id TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at INTEGER NOT NULL,
       FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE CASCADE
     );
 
@@ -70,14 +77,24 @@ export async function initDatabase() {
 
     CREATE INDEX IF NOT EXISTS idx_chunks_doc ON knowledge_chunks(doc_id);
     CREATE INDEX IF NOT EXISTS idx_runs_agent ON agent_runs(agent_id);
+    CREATE INDEX IF NOT EXISTS idx_runs_started ON agent_runs(started_at DESC);
   `);
 
-  // Seed default config if missing
+  // Backfill missing columns for upgrades
+  const cols = db.prepare("PRAGMA table_info('agent_runs')").all() as any[];
+  if (!cols.find((c) => c.name === 'cost')) {
+    db.exec('ALTER TABLE agent_runs ADD COLUMN cost REAL DEFAULT 0');
+  }
+
+  // Seed defaults
   const seedDefaults: Record<string, unknown> = {
     profile: { name: '', grade: '', interests: [] },
     contact: { email: '', whatsapp: '' },
-    llm: { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-4-5' },
+    llm: { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-4-6', ollamaUrl: 'http://localhost:11434' },
     smtp: { host: '', port: 587, user: '', pass: '', from: '' },
+    twilio: { accountSid: '', authToken: '', from: '' },
+    search: { tavilyKey: '', braveKey: '' },
+    ui: { theme: 'light', onboardingDone: false },
   };
 
   const stmt = db.prepare('SELECT key FROM config WHERE key = ?');

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow } from 'electron';
 import path from 'path';
 import { initDatabase } from './db/database';
 import { registerConfigHandlers } from './ipc/config';
@@ -6,9 +6,11 @@ import { registerAgentHandlers } from './ipc/agents';
 import { registerLLMHandlers } from './ipc/llm';
 import { registerKnowledgeHandlers } from './ipc/knowledge';
 import { registerExecutionHandlers } from './ipc/execution';
+import { registerDialogHandlers } from './ipc/dialog';
+import { registerTemplateHandlers } from './ipc/templates';
 import { startScheduler } from './services/scheduler';
 
-const isDev = process.env.NODE_ENV === 'development';
+const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_RENDERER_URL;
 
 let mainWindow: BrowserWindow | null = null;
 
@@ -18,8 +20,9 @@ function createWindow() {
     height: 900,
     minWidth: 1100,
     minHeight: 700,
-    backgroundColor: '#0a0905',
-    titleBarStyle: 'hiddenInset',
+    backgroundColor: '#f3f3f3',
+    title: 'Student Agent Builder',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -40,18 +43,19 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  // Initialize SQLite database
-  await initDatabase();
-
-  // Register all IPC handlers
-  registerConfigHandlers();
-  registerAgentHandlers();
-  registerLLMHandlers();
-  registerKnowledgeHandlers();
-  registerExecutionHandlers();
-
-  // Start the cron scheduler for scheduled agents
-  startScheduler();
+  try {
+    await initDatabase();
+    registerConfigHandlers();
+    registerAgentHandlers();
+    registerLLMHandlers();
+    registerKnowledgeHandlers();
+    registerExecutionHandlers();
+    registerDialogHandlers();
+    registerTemplateHandlers();
+    startScheduler();
+  } catch (err) {
+    console.error('Init failed:', err);
+  }
 
   createWindow();
 

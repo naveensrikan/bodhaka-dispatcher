@@ -1,90 +1,142 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Bot, Plus, Activity, BookOpen, Zap } from 'lucide-react';
-import type { Agent } from '../types/api';
+import { Bot, Plus, Activity, BookOpen, Zap, Sparkles, ChevronRight, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react';
+import type { Agent, ConfigShape, Stats } from '../types/api';
 
 export function Dashboard() {
   const [agents, setAgents] = useState<Agent[]>([]);
-  const [config, setConfig] = useState<any>(null);
+  const [config, setConfig] = useState<ConfigShape | null>(null);
+  const [recentRuns, setRecentRuns] = useState<any[]>([]);
+  const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
     window.api.agents.list().then(setAgents);
     window.api.config.get().then(setConfig);
+    window.api.agents.getAllRuns().then((r) => setRecentRuns(r.slice(0, 5)));
+    window.api.agents.stats().then(setStats);
   }, []);
 
-  const configReady = config?.llm?.apiKey?.length > 0;
+  const llmReady = !!config?.llm?.apiKey || config?.llm?.provider === 'ollama';
+  const smtpReady = !!config?.smtp?.host;
   const enabledAgents = agents.filter((a) => a.enabled).length;
+
+  const setupSteps = [
+    { done: !!config?.profile?.name, label: 'Add your profile', to: '/configuration' },
+    { done: llmReady, label: 'Connect an AI provider', to: '/configuration' },
+    { done: smtpReady, label: 'Configure email delivery', to: '/configuration' },
+    { done: agents.length > 0, label: 'Create your first agent', to: '/templates' },
+  ];
+  const setupComplete = setupSteps.every((s) => s.done);
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
-      <header className="mb-10">
-        <h1 className="font-display text-4xl tracking-tight mb-1">
-          Hello{config?.profile?.name ? `, ${config.profile.name.split(' ')[0]}` : ''}
+      <header className="mb-8">
+        <h1 className="text-2xl font-semibold tracking-tight mb-1">
+          {config?.profile?.name ? `Welcome back, ${config.profile.name.split(' ')[0]}` : 'Welcome'}
         </h1>
-        <p className="text-ink-300 text-sm">Your AI agents, ready when you are.</p>
+        <p className="text-text-secondary dark:text-text-secondary-dark text-[13px]">
+          Your AI agents, ready when you are.
+        </p>
       </header>
 
-      {/* Quick stats */}
-      <div className="grid grid-cols-3 gap-4 mb-10">
-        <StatCard icon={<Bot size={18} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} active`} />
-        <StatCard icon={<Activity size={18} />} label="Status" value={configReady ? 'Ready' : 'Setup needed'} sub={configReady ? 'LLM connected' : 'Add an API key'} />
-        <StatCard icon={<Zap size={18} />} label="Model" value={config?.llm?.model?.split('-').slice(0, 2).join('-') || '—'} sub={config?.llm?.provider || ''} />
+      <div className="grid grid-cols-4 gap-3 mb-8">
+        <StatCard icon={<Bot size={16} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} enabled`} />
+        <StatCard
+          icon={<Activity size={16} />} label="Provider"
+          value={llmReady ? (config?.llm?.provider || '—') : 'Not set'}
+          sub={llmReady ? config?.llm?.model?.split('-').slice(0,3).join('-') : 'Setup needed'}
+        />
+        <StatCard
+          icon={<Zap size={16} />} label="Runs (7d)"
+          value={String(stats?.last7Days?.runs || 0)}
+          sub={`${recentRuns.filter((r) => r.status === 'success').length} successful`}
+        />
+        <StatCard
+          icon={<DollarSign size={16} />} label="Cost (7d)"
+          value={`$${(stats?.last7Days?.cost || 0).toFixed(3)}`}
+          sub={`$${(stats?.totalCost || 0).toFixed(3)} all time`}
+        />
       </div>
 
-      {/* Setup checklist if not ready */}
-      {!configReady && (
-        <div className="card p-6 mb-8 border-accent/40">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-              <Zap size={18} className="text-accent" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-display text-lg mb-1">Finish setup</h3>
-              <p className="text-sm text-ink-300 mb-4">
-                Add your LLM API key to start building agents. Your key stays on this device.
-              </p>
-              <Link to="/configuration" className="btn-primary">
-                Go to Configuration →
+      {!setupComplete && (
+        <div className="card p-5 mb-8">
+          <div className="flex items-center gap-2 mb-3">
+            <AlertCircle size={16} className="text-accent" />
+            <h3 className="font-semibold text-sm">Finish setup</h3>
+          </div>
+          <p className="text-[13px] text-text-secondary dark:text-text-secondary-dark mb-4">
+            Complete these to start building agents.
+          </p>
+          <div className="space-y-2">
+            {setupSteps.map((s, i) => (
+              <Link
+                key={i} to={s.to}
+                className="flex items-center justify-between py-2 px-3 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle transition-colors group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center ${s.done ? 'bg-success' : 'border-2 border-border-strong dark:border-border-dark-strong'}`}>
+                    {s.done && <CheckCircle2 size={14} className="text-white" />}
+                  </div>
+                  <span className={`text-[13px] ${s.done ? 'text-text-tertiary line-through' : ''}`}>{s.label}</span>
+                </div>
+                {!s.done && <ChevronRight size={14} className="text-text-tertiary group-hover:text-accent" />}
               </Link>
-            </div>
+            ))}
           </div>
         </div>
       )}
 
-      {/* Recent agents */}
+      <div className="grid grid-cols-2 gap-3 mb-8">
+        <Link to="/templates" className="card p-5 hover:border-accent transition-colors group">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-win bg-accent-subtle dark:bg-accent-subtle-dark flex items-center justify-center">
+              <Sparkles size={16} className="text-accent" />
+            </div>
+            <div className="font-semibold text-sm group-hover:text-accent transition-colors">Start from a template</div>
+          </div>
+          <div className="text-[13px] text-text-secondary dark:text-text-secondary-dark">
+            12 ready-made agents — study, motivation, research, recreation.
+          </div>
+        </Link>
+        <Link to="/agents/new" className="card p-5 hover:border-accent transition-colors group">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-9 h-9 rounded-win bg-accent-subtle dark:bg-accent-subtle-dark flex items-center justify-center">
+              <Plus size={16} className="text-accent" />
+            </div>
+            <div className="font-semibold text-sm group-hover:text-accent transition-colors">Build from scratch</div>
+          </div>
+          <div className="text-[13px] text-text-secondary dark:text-text-secondary-dark">
+            Open the visual canvas and design your own agent.
+          </div>
+        </Link>
+      </div>
+
       <section>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-xl tracking-tight">Your Agents</h2>
-          <Link to="/agents/new" className="btn-primary">
-            <Plus size={14} /> New Agent
-          </Link>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-sm">Your Agents</h2>
+          {agents.length > 0 && <Link to="/agents" className="text-[12px] text-accent hover:underline">View all →</Link>}
         </div>
 
         {agents.length === 0 ? (
           <div className="card p-12 text-center">
-            <BookOpen size={28} className="mx-auto mb-3 text-ink-400" />
-            <p className="text-ink-200 mb-1">No agents yet</p>
-            <p className="text-sm text-ink-400">Build your first one in the Agent Builder.</p>
+            <BookOpen size={24} className="mx-auto mb-3 text-text-tertiary" />
+            <p className="text-sm mb-1">No agents yet</p>
+            <p className="text-[12px] text-text-secondary dark:text-text-secondary-dark mb-5">Pick a template to get started.</p>
+            <Link to="/templates" className="btn-primary"><Sparkles size={14} /> Browse templates</Link>
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3">
-            {agents.slice(0, 6).map((a) => (
-              <Link
-                key={a.id}
-                to={`/agents/${a.id}`}
-                className="card p-4 hover:border-accent/40 transition-colors group"
-              >
-                <div className="flex items-start justify-between mb-2">
-                  <div className="font-display text-base group-hover:text-accent transition-colors">
-                    {a.name}
-                  </div>
-                  <div className={`w-2 h-2 rounded-full mt-1.5 ${a.enabled ? 'bg-emerald-400' : 'bg-ink-500'}`} />
+            {agents.slice(0, 4).map((a) => (
+              <Link key={a.id} to={`/agents/${a.id}`} className="card p-4 hover:border-accent transition-colors group">
+                <div className="flex items-start justify-between mb-1.5">
+                  <div className="font-medium text-[13px] group-hover:text-accent transition-colors">{a.name}</div>
+                  <div className={`w-1.5 h-1.5 rounded-full mt-1.5 ${a.enabled ? 'bg-success' : 'bg-text-tertiary'}`} />
                 </div>
-                <div className="text-xs text-ink-400 line-clamp-2">{a.description || 'No description'}</div>
+                <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark line-clamp-2">
+                  {a.description || `${a.definition?.nodes?.length || 0} blocks`}
+                </div>
                 {a.schedule && (
-                  <div className="mt-3 text-[10px] font-mono text-ink-400 uppercase tracking-wider">
-                    {a.schedule}
-                  </div>
+                  <div className="mt-3 text-[10px] font-mono text-text-tertiary uppercase tracking-wider">{a.schedule}</div>
                 )}
               </Link>
             ))}
@@ -97,13 +149,13 @@ export function Dashboard() {
 
 function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
   return (
-    <div className="card p-5">
-      <div className="flex items-center gap-2 text-ink-300 mb-3">
+    <div className="card p-4">
+      <div className="flex items-center gap-1.5 text-text-secondary dark:text-text-secondary-dark mb-2.5">
         {icon}
-        <span className="text-xs uppercase tracking-wider">{label}</span>
+        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
       </div>
-      <div className="font-display text-2xl mb-1">{value}</div>
-      <div className="text-xs text-ink-400">{sub}</div>
+      <div className="text-xl font-semibold mb-0.5 truncate">{value}</div>
+      <div className="text-[11px] text-text-tertiary truncate">{sub}</div>
     </div>
   );
 }

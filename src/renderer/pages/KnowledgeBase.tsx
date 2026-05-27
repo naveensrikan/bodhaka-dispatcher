@@ -1,5 +1,6 @@
-import { useEffect, useState, useRef } from 'react';
-import { Upload, FileText, Trash2, Search, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Upload, FileText, Trash2, Search, Loader2, FilePlus } from 'lucide-react';
+import { useToast } from '../components/Toast';
 
 interface Doc {
   id: string;
@@ -14,7 +15,8 @@ export function KnowledgeBase() {
   const [uploading, setUploading] = useState(false);
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [searching, setSearching] = useState(false);
+  const toast = useToast();
 
   async function refresh() {
     const list = await window.api.knowledge.list();
@@ -25,115 +27,160 @@ export function KnowledgeBase() {
     refresh();
   }, []);
 
-  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
+  async function pickAndUpload() {
+    try {
+      const paths = await window.api.dialog.openFiles({
+        title: 'Add study material',
+        filters: [
+          { name: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md'] },
+          { name: 'All Files', extensions: ['*'] },
+        ],
+      });
 
-    setUploading(true);
-    // Electron-specific: get file paths
-    const paths = Array.from(files).map((f) => (f as any).path).filter(Boolean);
-    if (paths.length === 0) {
-      alert('Could not read file paths. Make sure you are running in the Electron desktop app.');
+      if (!paths || paths.length === 0) return;
+
+      setUploading(true);
+      toast.show(`Processing ${paths.length} file${paths.length > 1 ? 's' : ''}...`, 'info');
+      const results = await window.api.knowledge.upload(paths);
+      await refresh();
+
+      const successful = results.filter((r: any) => !r.error).length;
+      const failed = results.filter((r: any) => r.error).length;
+
+      if (successful > 0 && failed === 0) {
+        toast.show(`Indexed ${successful} file${successful > 1 ? 's' : ''}`, 'success');
+      } else if (successful > 0 && failed > 0) {
+        toast.show(`${successful} succeeded, ${failed} failed`, 'info');
+      } else {
+        toast.show(`Failed to index: ${results[0]?.error || 'unknown error'}`, 'error');
+      }
+    } catch (err: any) {
+      toast.show(`Upload failed: ${err.message}`, 'error');
+    } finally {
       setUploading(false);
-      return;
     }
-    await window.api.knowledge.upload(paths);
-    await refresh();
-    setUploading(false);
-    if (fileRef.current) fileRef.current.value = '';
   }
 
   async function doSearch() {
     if (!query.trim()) return;
-    const r = await window.api.knowledge.search(query, 5);
-    setResults(r);
+    setSearching(true);
+    try {
+      const r = await window.api.knowledge.search(query, 5);
+      setResults(r);
+      if (r.length === 0) {
+        toast.show('No matches found. Try uploading more material or different keywords.', 'info');
+      }
+    } catch (err: any) {
+      toast.show(`Search failed: ${err.message}`, 'error');
+    } finally {
+      setSearching(false);
+    }
   }
 
-  async function deleteDoc(id: string) {
-    if (!confirm('Delete this document and all its chunks?')) return;
+  async function deleteDoc(id: string, name: string) {
+    if (!confirm(`Delete "${name}" and all its indexed chunks?`)) return;
     await window.api.knowledge.delete(id);
     await refresh();
+    toast.show('Document deleted', 'success');
   }
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
-      <header className="mb-8">
-        <h1 className="font-display text-3xl tracking-tight">Knowledge Base</h1>
-        <p className="text-ink-300 text-sm mt-1">
-          Upload textbooks, lecture notes, PDFs, or notes. Agents can read and reason over them.
+      <header className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight">Knowledge Base</h1>
+        <p className="text-text-secondary dark:text-text-secondary-dark text-[13px] mt-1">
+          Upload textbooks, lecture notes, or any reference material. Your agents can read and reason over it.
         </p>
       </header>
 
-      {/* Upload */}
-      <div className="card p-6 mb-6 border-dashed border-2 border-ink-700">
-        <input
-          ref={fileRef}
-          type="file"
-          multiple
-          accept=".pdf,.docx,.txt,.md"
-          onChange={handleUpload}
-          className="hidden"
-          id="file-upload"
-        />
-        <label htmlFor="file-upload" className="cursor-pointer flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center">
-            {uploading ? <Loader2 size={20} className="animate-spin text-accent" /> : <Upload size={20} className="text-accent" />}
+      {/* Upload card */}
+      <div
+        onClick={uploading ? undefined : pickAndUpload}
+        className={`card p-6 mb-5 border-dashed border-2 ${uploading ? 'opacity-60' : 'cursor-pointer hover:border-accent hover:bg-accent-subtle/30 dark:hover:bg-accent-subtle-dark/30'} transition-all`}
+      >
+        <div className="flex items-center gap-4">
+          <div className="w-11 h-11 rounded-win bg-accent-subtle dark:bg-accent-subtle-dark flex items-center justify-center">
+            {uploading
+              ? <Loader2 size={20} className="animate-spin text-accent" />
+              : <Upload size={20} className="text-accent" />
+            }
           </div>
-          <div>
-            <div className="font-display text-lg">
-              {uploading ? 'Processing…' : 'Add study material'}
+          <div className="flex-1">
+            <div className="font-semibold text-sm mb-0.5">
+              {uploading ? 'Processing files...' : 'Add study material'}
             </div>
-            <div className="text-xs text-ink-400">PDF · DOCX · TXT · MD — files are chunked and embedded locally</div>
+            <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark">
+              {uploading
+                ? 'Extracting text, chunking, and creating embeddings...'
+                : 'Click to choose files · PDF, DOCX, TXT, MD'
+              }
+            </div>
           </div>
-        </label>
+          {!uploading && (
+            <button className="btn-primary">
+              <FilePlus size={14} /> Choose files
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Search */}
-      <div className="card p-4 mb-6">
+      <div className="card p-3 mb-5">
         <div className="flex gap-2">
-          <div className="flex-1 flex items-center gap-2 bg-ink-800/80 border border-ink-700 rounded-lg px-3">
-            <Search size={14} className="text-ink-400" />
+          <div className="flex-1 flex items-center gap-2 input">
+            <Search size={14} className="text-text-tertiary shrink-0" />
             <input
-              className="flex-1 bg-transparent py-2 outline-none text-sm"
-              placeholder="Search across your knowledge base…"
+              className="flex-1 bg-transparent outline-none text-sm"
+              placeholder="Search across your knowledge base..."
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && doSearch()}
             />
           </div>
-          <button onClick={doSearch} className="btn-primary">Search</button>
+          <button onClick={doSearch} disabled={searching || !query.trim()} className="btn-primary">
+            {searching ? <Loader2 size={14} className="animate-spin" /> : 'Search'}
+          </button>
         </div>
         {results.length > 0 && (
-          <div className="mt-4 space-y-2">
+          <div className="mt-3 space-y-2">
             {results.map((r) => (
-              <div key={r.id} className="p-3 bg-ink-800/40 rounded-lg border border-ink-700/40">
-                <div className="text-[10px] uppercase tracking-wider text-ink-400 mb-1">
-                  {r.filename} · score {r.score?.toFixed(3)}
+              <div key={r.id} className="p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle border border-border dark:border-border-dark">
+                <div className="text-[11px] text-text-tertiary mb-1.5 flex items-center justify-between">
+                  <span>{r.filename}</span>
+                  <span className="chip">score {r.score?.toFixed(3)}</span>
                 </div>
-                <div className="text-sm text-ink-100 line-clamp-3">{r.content}</div>
+                <div className="text-[13px] line-clamp-3">{r.content}</div>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* Documents list */}
-      <h2 className="font-display text-lg tracking-tight mb-3">Indexed Documents ({docs.length})</h2>
+      {/* Documents */}
+      <div className="flex items-center justify-between mb-3">
+        <h2 className="font-semibold text-sm">Indexed Documents</h2>
+        <span className="text-[12px] text-text-tertiary">{docs.length} {docs.length === 1 ? 'doc' : 'docs'}</span>
+      </div>
       {docs.length === 0 ? (
-        <div className="card p-12 text-center text-ink-400 text-sm">No documents yet. Upload something above.</div>
+        <div className="card p-10 text-center text-text-secondary text-sm">
+          No documents yet. Upload something above to get started.
+        </div>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           {docs.map((d) => (
-            <div key={d.id} className="card p-4 flex items-center gap-4">
-              <FileText size={18} className="text-accent shrink-0" />
+            <div key={d.id} className="card p-3 flex items-center gap-3">
+              <FileText size={16} className="text-accent shrink-0" />
               <div className="flex-1 min-w-0">
-                <div className="font-medium text-sm truncate">{d.filename}</div>
-                <div className="text-xs text-ink-400 mt-0.5">
+                <div className="font-medium text-[13px] truncate">{d.filename}</div>
+                <div className="text-[11px] text-text-tertiary mt-0.5">
                   {(d.size_bytes / 1024).toFixed(1)} KB · {d.chunk_count} chunks · {new Date(d.created_at).toLocaleDateString()}
                 </div>
               </div>
-              <button onClick={() => deleteDoc(d.id)} className="btn-ghost text-red-400 hover:bg-red-500/10">
-                <Trash2 size={14} />
+              <button
+                onClick={() => deleteDoc(d.id, d.filename)}
+                className="btn-ghost text-danger hover:bg-danger/10"
+              >
+                <Trash2 size={13} />
               </button>
             </div>
           ))}

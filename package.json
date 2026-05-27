@@ -1,6 +1,6 @@
 {
   "name": "student-agent-builder",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "description": "A desktop app for students to build their own AI agents with a visual canvas",
   "main": "dist/main/index.js",
   "author": "You",
@@ -55,12 +55,17 @@
   "build": {
     "appId": "com.studentagent.builder",
     "productName": "Student Agent Builder",
+    "publish": null,
     "directories": {
       "output": "release"
     },
     "files": [
       "dist/**/*",
       "package.json"
+    ],
+    "asarUnpack": [
+      "**/node_modules/better-sqlite3/**/*",
+      "**/node_modules/pdf-parse/**/*"
     ],
     "win": {
       "target": [
@@ -69,7 +74,8 @@
           "arch": ["x64"]
         }
       ],
-      "artifactName": "${productName}-Setup-${version}.${ext}"
+      "artifactName": "${productName}-Setup-${version}.${ext}",
+      "publish": null
     },
     "nsis": {
       "oneClick": false,
