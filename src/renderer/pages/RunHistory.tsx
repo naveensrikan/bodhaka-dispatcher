@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Loader2, CheckCircle2, XCircle, Clock, RefreshCw } from 'lucide-react';
+import { Markdown } from '../components/Markdown';
 import type { AgentRun } from '../types/api';
 
 export function RunHistory() {
@@ -9,14 +10,21 @@ export function RunHistory() {
 
   async function refresh() {
     setLoading(true);
-    const list = await window.api.agents.getAllRuns();
-    setRuns(list);
+    setRuns(await window.api.agents.getAllRuns());
     setLoading(false);
   }
 
-  useEffect(() => {
-    refresh();
-  }, []);
+  useEffect(() => { refresh(); }, []);
+
+  function getOutputContent(output: string | null): string {
+    if (!output) return '';
+    try {
+      const parsed = JSON.parse(output);
+      return typeof parsed === 'string' ? parsed : JSON.stringify(parsed, null, 2);
+    } catch {
+      return output;
+    }
+  }
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
@@ -24,7 +32,7 @@ export function RunHistory() {
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Run History</h1>
           <p className="text-text-secondary dark:text-text-secondary-dark text-[13px] mt-1">
-            Every agent run, with full logs and outputs.
+            Every agent run, with full logs, output, and cost.
           </p>
         </div>
         <button onClick={refresh} className="btn-secondary">
@@ -40,20 +48,16 @@ export function RunHistory() {
         <div className="card p-12 text-center">
           <Clock size={24} className="mx-auto mb-3 text-text-tertiary" />
           <p className="text-sm">No runs yet</p>
-          <p className="text-[12px] text-text-secondary mt-1">
-            Once you run an agent, its history will appear here.
-          </p>
+          <p className="text-[12px] text-text-secondary mt-1">Once you run an agent, its history will appear here.</p>
         </div>
       ) : (
         <div className="grid grid-cols-5 gap-4">
-          {/* Runs list */}
           <div className="col-span-2 space-y-1.5 max-h-[calc(100vh-200px)] overflow-y-auto pr-2">
             {runs.map((r) => (
               <button
-                key={r.id}
-                onClick={() => setSelected(r)}
+                key={r.id} onClick={() => setSelected(r)}
                 className={`w-full card p-3 text-left transition-colors ${
-                  selected?.id === r.id ? 'border-accent' : 'hover:border-accent/50'
+                  selected?.id === r.id ? 'border-brand' : 'hover:border-brand/50'
                 }`}
               >
                 <div className="flex items-center gap-2 mb-1">
@@ -62,13 +66,15 @@ export function RunHistory() {
                 </div>
                 <div className="text-[11px] text-text-tertiary flex items-center justify-between">
                   <span>{new Date(r.started_at).toLocaleString()}</span>
-                  {r.finished_at && <span>{((r.finished_at - r.started_at) / 1000).toFixed(1)}s</span>}
+                  <span>
+                    {r.finished_at && `${((r.finished_at - r.started_at) / 1000).toFixed(1)}s`}
+                    {r.cost > 0 && ` · $${r.cost.toFixed(4)}`}
+                  </span>
                 </div>
               </button>
             ))}
           </div>
 
-          {/* Detail panel */}
           <div className="col-span-3">
             {!selected ? (
               <div className="card p-10 text-center text-text-tertiary text-sm">
@@ -93,24 +99,18 @@ export function RunHistory() {
 
                 <div className="mb-4">
                   <div className="text-[11px] uppercase tracking-wider text-text-tertiary font-medium mb-1.5">Logs</div>
-                  <div className="bg-bg-hover dark:bg-bg-dark-subtle rounded-win p-3 max-h-80 overflow-y-auto font-mono text-[11px] leading-relaxed">
+                  <div className="bg-bg-hover dark:bg-bg-dark-subtle rounded-win p-3 max-h-60 overflow-y-auto font-mono text-[11px] leading-relaxed">
                     {selected.logs
-                      ? JSON.parse(selected.logs).map((line: string, i: number) => (
-                          <div key={i}>{line}</div>
-                        ))
-                      : <span className="text-text-tertiary">No logs</span>
-                    }
+                      ? JSON.parse(selected.logs).map((line: string, i: number) => <div key={i}>{line}</div>)
+                      : <span className="text-text-tertiary">No logs</span>}
                   </div>
                 </div>
 
                 {selected.output && (
                   <div>
                     <div className="text-[11px] uppercase tracking-wider text-text-tertiary font-medium mb-1.5">Output</div>
-                    <div className="bg-bg-hover dark:bg-bg-dark-subtle rounded-win p-3 max-h-80 overflow-y-auto text-[12px] whitespace-pre-wrap leading-relaxed">
-                      {typeof JSON.parse(selected.output) === 'string'
-                        ? JSON.parse(selected.output)
-                        : JSON.stringify(JSON.parse(selected.output), null, 2)
-                      }
+                    <div className="bg-bg-hover dark:bg-bg-dark-subtle rounded-win p-4 max-h-96 overflow-y-auto">
+                      <Markdown content={getOutputContent(selected.output)} />
                     </div>
                   </div>
                 )}
@@ -126,5 +126,5 @@ export function RunHistory() {
 function StatusIcon({ status }: { status: string }) {
   if (status === 'success') return <CheckCircle2 size={14} className="text-success shrink-0" />;
   if (status === 'failed') return <XCircle size={14} className="text-danger shrink-0" />;
-  return <Loader2 size={14} className="animate-spin text-accent shrink-0" />;
+  return <Loader2 size={14} className="animate-spin text-brand shrink-0" />;
 }

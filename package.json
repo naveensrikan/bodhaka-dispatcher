@@ -1,10 +1,11 @@
 {
-  "name": "student-agent-builder",
-  "version": "0.3.0",
-  "description": "A desktop app for students to build their own AI agents with a visual canvas",
+  "name": "bodhaka-forge",
+  "version": "0.4.0",
+  "description": "Bodhaka Forge — Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
   "main": "dist/main/index.js",
-  "author": "You",
-  "license": "MIT",
+  "author": "BuoyantWave Learning Technologies LLP",
+  "license": "Proprietary",
+  "homepage": "https://bodhaka.org/bodhaka-forge",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:*\"",
     "dev:vite": "vite",
@@ -21,6 +22,7 @@
     "@xyflow/react": "^12.3.5",
     "better-sqlite3": "^11.5.0",
     "clsx": "^2.1.1",
+    "katex": "^0.16.11",
     "lucide-react": "^0.460.0",
     "mammoth": "^1.8.0",
     "node-cron": "^3.0.3",
@@ -29,12 +31,17 @@
     "pdf-parse": "^1.1.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
     "react-router-dom": "^6.28.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0",
     "tailwind-merge": "^2.5.4",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
+    "@types/katex": "^0.16.7",
     "@types/node": "^22.9.0",
     "@types/node-cron": "^3.0.11",
     "@types/nodemailer": "^6.4.16",
@@ -53,15 +60,22 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "com.studentagent.builder",
-    "productName": "Student Agent Builder",
+    "appId": "org.bodhaka.forge",
+    "productName": "Bodhaka Forge",
     "publish": null,
     "directories": {
-      "output": "release"
+      "output": "release",
+      "buildResources": "resources"
     },
     "files": [
       "dist/**/*",
       "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/logo.png",
+        "to": "logo.png"
+      }
     ],
     "asarUnpack": [
       "**/node_modules/better-sqlite3/**/*",
@@ -74,6 +88,7 @@
           "arch": ["x64"]
         }
       ],
+      "icon": "resources/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}",
       "publish": null
     },
@@ -82,10 +97,13 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Student Agent Builder"
+      "shortcutName": "Bodhaka Forge",
+      "installerIcon": "resources/icon.ico",
+      "uninstallerIcon": "resources/icon.ico"
     },
     "mac": {
       "target": "dmg",
+      "icon": "resources/icon.ico",
       "category": "public.app-category.education"
     }
   }

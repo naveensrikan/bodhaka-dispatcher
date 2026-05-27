@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, ArrowRight, X } from 'lucide-react';
+import { ArrowRight, X } from 'lucide-react';
+import { Logo } from './Logo';
 
 export function Onboarding() {
   const [show, setShow] = useState(false);
@@ -32,22 +33,26 @@ export function Onboarding() {
           <X size={16} />
         </button>
 
-        <div className="w-12 h-12 rounded-win bg-accent-subtle dark:bg-accent-subtle-dark flex items-center justify-center mb-4">
-          <Sparkles size={22} className="text-accent" />
+        <div className="flex items-center gap-4 mb-4">
+          <Logo size={56} />
+          <div>
+            <h2 className="text-xl font-semibold">Welcome to Bodhaka Forge</h2>
+            <p className="text-[11px] text-text-tertiary mt-0.5">Build your own AI agents.</p>
+          </div>
         </div>
 
-        <h2 className="text-xl font-semibold mb-2">Welcome to Agent Studio</h2>
         <p className="text-[13px] text-text-secondary dark:text-text-secondary-dark mb-6">
-          Build AI agents that work for you — daily study summaries, motivational messages,
-          research briefings, quiz generators, and more. All running locally, with your own API key.
+          Design AI agents that work for you — daily study summaries, motivational messages,
+          research briefings, quiz generators, and more. All running locally on your machine,
+          using your own API keys.
         </p>
 
         <div className="space-y-3 mb-6">
           <Step number={1} title="Connect an AI provider">
-            Bring your own Anthropic, OpenAI, Gemini, or local Ollama key.
+            Anthropic, OpenAI, Gemini, or Ollama (local).
           </Step>
-          <Step number={2} title="Configure email">
-            So your agents can send results to your inbox.
+          <Step number={2} title="Configure delivery channels">
+            Email (SMTP) so your agents can reach your inbox.
           </Step>
           <Step number={3} title="Pick a template or build from scratch">
             12 ready-made agents available, or design your own.
@@ -72,7 +77,7 @@ export function Onboarding() {
 function Step({ number, title, children }: { number: number; title: string; children: React.ReactNode }) {
   return (
     <div className="flex gap-3 items-start">
-      <div className="w-6 h-6 rounded-full bg-accent text-white text-[11px] font-semibold flex items-center justify-center shrink-0">{number}</div>
+      <div className="w-6 h-6 rounded-full bg-brand text-white text-[11px] font-semibold flex items-center justify-center shrink-0">{number}</div>
       <div>
         <div className="font-medium text-[13px] mb-0.5">{title}</div>
         <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark">{children}</div>

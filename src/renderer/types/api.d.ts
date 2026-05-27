@@ -6,6 +6,11 @@ export interface ConfigShape {
   twilio: { accountSid: string; authToken: string; from: string };
   search: { tavilyKey: string; braveKey: string };
   ui: { theme: 'light' | 'dark'; onboardingDone: boolean };
+  verified?: {
+    llm?: boolean;
+    smtp?: boolean;
+    twilio?: boolean;
+  };
 }
 
 export interface Agent {
@@ -46,6 +51,16 @@ export interface Stats {
   last7Days: { cost: number; runs: number };
 }
 
+export interface AcceptanceRecord {
+  accepted: boolean;
+  acceptedAt: string;
+  acceptedDate: string;
+  acceptedTime: string;
+  appVersion: string;
+  hostname: string;
+  platform: string;
+}
+
 declare global {
   interface Window {
     api: {
@@ -83,6 +98,14 @@ declare global {
       templates: {
         list: () => Promise<TemplateInfo[]>;
         create: (templateId: string) => Promise<{ id: string }>;
+      };
+      acceptance: {
+        get: () => Promise<AcceptanceRecord | null>;
+        accept: () => Promise<AcceptanceRecord>;
+        getPath: () => Promise<string>;
+      };
+      shell: {
+        openExternal: (url: string) => Promise<void>;
       };
       execution: {
         onRunUpdate: (callback: (data: any) => void) => () => void;

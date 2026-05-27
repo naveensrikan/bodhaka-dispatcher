@@ -12,6 +12,10 @@ import { RunHistory } from './pages/RunHistory';
 import { ToastProvider } from './components/Toast';
 import './styles/globals.css';
 
+// Load KaTeX's mhchem extension for chemistry notation (\ce{H2O})
+// @ts-ignore — no type defs for this file
+import 'katex/contrib/mhchem';
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ToastProvider>

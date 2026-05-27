@@ -1,48 +1,26 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Key, Mail, Send, Check, X, Loader2, ExternalLink, Eye, EyeOff,
-  MessageCircle, Globe, Search as SearchIcon
+  User, Key, Mail, Send, Check, Loader2, Eye, EyeOff,
+  MessageCircle, Search as SearchIcon, Award,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { InfoTooltip } from '../components/InfoTooltip';
+import { ExtLink } from '../components/ExtLink';
+import { SETUP_STEPS } from '../lib/setupSteps';
 import type { ConfigShape } from '../types/api';
 
 const PROVIDER_INFO = {
-  anthropic: {
-    name: 'Anthropic Claude',
-    recommendedModel: 'claude-sonnet-4-6',
-    keyUrl: 'https://console.anthropic.com/settings/keys',
-    placeholder: 'sk-ant-...',
-    note: 'Best reasoning for student work. Has built-in web search.',
-  },
-  openai: {
-    name: 'OpenAI',
-    recommendedModel: 'gpt-4o-mini',
-    keyUrl: 'https://platform.openai.com/api-keys',
-    placeholder: 'sk-...',
-    note: 'Cheaper option. Supports embeddings for semantic search.',
-  },
-  gemini: {
-    name: 'Google Gemini',
-    recommendedModel: 'gemini-1.5-flash-latest',
-    keyUrl: 'https://aistudio.google.com/app/apikey',
-    placeholder: 'AIza...',
-    note: 'Free tier available. Fast and capable.',
-  },
-  ollama: {
-    name: 'Ollama (Local)',
-    recommendedModel: 'llama3.2',
-    keyUrl: 'https://ollama.com',
-    placeholder: 'No key needed',
-    note: 'Run models locally on your machine. 100% private, free, but requires setup.',
-  },
+  anthropic: { name: 'Anthropic Claude', recommendedModel: 'claude-sonnet-4-6', placeholder: 'sk-ant-...', note: 'Best reasoning. Built-in web search.' },
+  openai:    { name: 'OpenAI',           recommendedModel: 'gpt-4o-mini',       placeholder: 'sk-...',     note: 'Cheaper. Supports embeddings.' },
+  gemini:    { name: 'Google Gemini',    recommendedModel: 'gemini-1.5-flash-latest', placeholder: 'AIza...', note: 'Generous free tier.' },
+  ollama:    { name: 'Ollama (Local)',   recommendedModel: 'llama3.2',          placeholder: 'No key needed', note: 'Run models locally. Free and private.' },
 };
 
 export function Configuration() {
   const [config, setConfig] = useState<ConfigShape | null>(null);
   const [models, setModels] = useState<string[]>([]);
   const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<'ok' | 'fail' | null>(null);
   const [testingSmtp, setTestingSmtp] = useState(false);
   const [testingTwilio, setTestingTwilio] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -64,33 +42,47 @@ export function Configuration() {
   function update<K extends keyof ConfigShape>(key: K, patch: Partial<ConfigShape[K]>) {
     setConfig((prev) => (prev ? { ...prev, [key]: { ...prev[key], ...patch } } : prev));
   }
+  function setVerified(which: 'llm' | 'smtp' | 'twilio', value: boolean) {
+    setConfig((prev) => prev ? { ...prev, verified: { ...prev.verified, [which]: value } } : prev);
+  }
 
   async function changeProvider(provider: 'openai' | 'anthropic' | 'gemini' | 'ollama') {
     const list = await window.api.llm.listModels(provider);
     setModels(list);
     update('llm', { provider, model: PROVIDER_INFO[provider].recommendedModel, apiKey: '' });
-    setTestResult(null);
+    setVerified('llm', false);
   }
 
   async function testKey() {
     if (!config) return;
     setTesting(true);
-    setTestResult(null);
     const res = await window.api.llm.testKey(config.llm.provider, config.llm.apiKey, config.llm.ollamaUrl);
-    setTestResult(res.success ? 'ok' : 'fail');
     setTesting(false);
-    if (res.success) toast.show('Provider connection verified', 'success');
-    else toast.show(`Test failed: ${res.error || 'unknown'}`, 'error');
+    if (res.success) {
+      setVerified('llm', true);
+      await window.api.config.update({
+        llm: config.llm,
+        verified: { ...config.verified, llm: true },
+      });
+    } else {
+      setVerified('llm', false);
+      toast.show(`Test failed: ${res.error || 'invalid credentials'}`, 'error');
+    }
   }
 
   async function testSmtp() {
+    if (!config) return;
     setTestingSmtp(true);
-    // Save current SMTP first
-    if (config) await window.api.config.update({ smtp: config.smtp });
+    await window.api.config.update({ smtp: config.smtp });
     const res = await window.api.smtp.test();
     setTestingSmtp(false);
-    if (res.success) toast.show('SMTP connection verified', 'success');
-    else toast.show(`SMTP test failed: ${res.error}`, 'error');
+    if (res.success) {
+      setVerified('smtp', true);
+      await window.api.config.update({ smtp: config.smtp, verified: { ...config.verified, smtp: true } });
+    } else {
+      setVerified('smtp', false);
+      toast.show(`SMTP test failed: ${res.error}`, 'error');
+    }
   }
 
   async function testTwilio() {
@@ -98,8 +90,13 @@ export function Configuration() {
     setTestingTwilio(true);
     const res = await window.api.twilio.test(config.twilio.accountSid, config.twilio.authToken);
     setTestingTwilio(false);
-    if (res.ok) toast.show('Twilio credentials verified', 'success');
-    else toast.show(`Twilio test failed: ${res.error}`, 'error');
+    if (res.ok) {
+      setVerified('twilio', true);
+      await window.api.config.update({ twilio: config.twilio, verified: { ...config.verified, twilio: true } });
+    } else {
+      setVerified('twilio', false);
+      toast.show(`Twilio test failed: ${res.error}`, 'error');
+    }
   }
 
   async function save() {
@@ -111,7 +108,7 @@ export function Configuration() {
       await window.api.config.update(toSave);
       setConfig(toSave);
       toast.show('Settings saved', 'success');
-      setTimeout(() => navigate('/dashboard'), 600);
+      setTimeout(() => navigate('/dashboard'), 500);
     } catch (err: any) {
       toast.show(`Save failed: ${err.message}`, 'error');
     } finally {
@@ -127,7 +124,7 @@ export function Configuration() {
       <header className="mb-4">
         <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
         <p className="text-text-secondary dark:text-text-secondary-dark text-[13px] mt-1">
-          Configure your profile, AI provider, and how your agents reach you. All data stays on this device.
+          Configure your profile, AI provider, and delivery channels. All data stays on this device.
         </p>
       </header>
 
@@ -136,14 +133,24 @@ export function Configuration() {
           <input className="input w-full" value={config.profile.name} onChange={(e) => update('profile', { name: e.target.value })} placeholder="e.g. Naveen Srikan" />
         </Field>
         <Field label="Grade / Year">
-          <input className="input w-full" value={config.profile.grade} onChange={(e) => update('profile', { grade: e.target.value })} placeholder="e.g. Class 12 · 2nd year B.Tech" />
+          <input className="input w-full" value={config.profile.grade} onChange={(e) => update('profile', { grade: e.target.value })} placeholder="e.g. Class 12, 2nd year B.Tech, MBA student" />
         </Field>
-        <Field label="Interests" hint="Separate with commas. Spaces are fine.">
-          <input className="input w-full" value={interestsText} onChange={(e) => setInterestsText(e.target.value)} placeholder="e.g. physics, chess, anime, startups, cricket" />
+        <Field label="Hobbies & Interests" hint="Separate with commas. These help personalize your agents' tone.">
+          <input
+            className="input w-full"
+            value={interestsText}
+            onChange={(e) => setInterestsText(e.target.value)}
+            placeholder="e.g. chess, photography, cricket, gaming, reading, music, hiking, cooking"
+          />
         </Field>
       </Section>
 
-      <Section icon={<Key size={15} />} title="AI Provider">
+      <Section
+        icon={<Key size={15} />}
+        title="AI Provider"
+        verified={config.verified?.llm}
+        info={<InfoTooltip title={SETUP_STEPS[config.llm.provider].title} steps={SETUP_STEPS[config.llm.provider].steps} />}
+      >
         <Field label="Provider">
           <div className="grid grid-cols-2 gap-2">
             {(['anthropic', 'openai', 'gemini', 'ollama'] as const).map((p) => (
@@ -152,8 +159,8 @@ export function Configuration() {
                 onClick={() => changeProvider(p)}
                 className={`p-3 rounded-win border text-left transition-all ${
                   config.llm.provider === p
-                    ? 'border-accent bg-accent-subtle dark:bg-accent-subtle-dark'
-                    : 'border-border-strong dark:border-border-dark-strong bg-bg-layer dark:bg-bg-dark-layer hover:border-accent/50'
+                    ? 'border-brand bg-brand-subtle dark:bg-brand-subtle-dark'
+                    : 'border-border-strong dark:border-border-dark-strong bg-bg-layer dark:bg-bg-dark-layer hover:border-brand/50'
                 }`}
               >
                 <div className="text-[13px] font-semibold mb-0.5">{PROVIDER_INFO[p].name}</div>
@@ -164,29 +171,46 @@ export function Configuration() {
         </Field>
 
         <Field label="Model">
-          <select className="input w-full" value={config.llm.model} onChange={(e) => update('llm', { model: e.target.value })}>
-            {models.map((m) => (
-              <option key={m} value={m}>{m}{m === providerInfo.recommendedModel ? ' — recommended' : ''}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            <select className="input flex-1" value={config.llm.model} onChange={(e) => update('llm', { model: e.target.value })}>
+              {models.map((m) => (<option key={m} value={m}>{m}</option>))}
+            </select>
+            {config.llm.model === providerInfo.recommendedModel && (
+              <span className="chip-gold shrink-0">
+                <Award size={11} /> Recommended
+              </span>
+            )}
+          </div>
+          {config.llm.model !== providerInfo.recommendedModel && (
+            <div className="mt-1.5 text-[11px] text-text-tertiary">
+              ★ <button onClick={() => update('llm', { model: providerInfo.recommendedModel })} className="text-brand hover:underline">
+                Use recommended: {providerInfo.recommendedModel}
+              </button>
+            </div>
+          )}
         </Field>
 
         {config.llm.provider === 'ollama' ? (
           <Field label="Ollama Server URL" hint="Default: http://localhost:11434">
             <div className="flex gap-2">
-              <input className="input flex-1" value={config.llm.ollamaUrl || ''} onChange={(e) => update('llm', { ollamaUrl: e.target.value })} placeholder="http://localhost:11434" />
+              <input className="input flex-1" value={config.llm.ollamaUrl || ''} onChange={(e) => { update('llm', { ollamaUrl: e.target.value }); setVerified('llm', false); }} placeholder="http://localhost:11434" />
               <button onClick={testKey} disabled={testing} className="btn-secondary">
                 {testing ? <Loader2 size={14} className="animate-spin" /> : 'Test'}
               </button>
             </div>
-            {testResult === 'ok' && <div className="mt-2 text-[12px] text-success flex items-center gap-1.5"><Check size={12} /> Connected</div>}
-            {testResult === 'fail' && <div className="mt-2 text-[12px] text-danger flex items-center gap-1.5"><X size={12} /> Could not reach Ollama</div>}
+            {config.verified?.llm && <VerifiedBadge text="Connected to Ollama" />}
           </Field>
         ) : (
-          <Field label="API Key" hint={<a href={providerInfo.keyUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline inline-flex items-center gap-1">Get a key <ExternalLink size={10} /></a>}>
+          <Field label="API Key">
             <div className="flex gap-2">
               <div className="flex-1 relative">
-                <input type={showKey ? 'text' : 'password'} className="input w-full pr-9" value={config.llm.apiKey} onChange={(e) => { update('llm', { apiKey: e.target.value }); setTestResult(null); }} placeholder={providerInfo.placeholder} />
+                <input
+                  type={showKey ? 'text' : 'password'}
+                  className="input w-full pr-9"
+                  value={config.llm.apiKey}
+                  onChange={(e) => { update('llm', { apiKey: e.target.value }); setVerified('llm', false); }}
+                  placeholder={providerInfo.placeholder}
+                />
                 <button type="button" onClick={() => setShowKey((s) => !s)} className="absolute right-2 top-1/2 -translate-y-1/2 text-text-tertiary hover:text-text-primary">
                   {showKey ? <EyeOff size={14} /> : <Eye size={14} />}
                 </button>
@@ -195,8 +219,7 @@ export function Configuration() {
                 {testing ? <Loader2 size={14} className="animate-spin" /> : 'Test'}
               </button>
             </div>
-            {testResult === 'ok' && <div className="mt-2 text-[12px] text-success flex items-center gap-1.5"><Check size={12} /> Verified</div>}
-            {testResult === 'fail' && <div className="mt-2 text-[12px] text-danger flex items-center gap-1.5"><X size={12} /> Validation failed</div>}
+            {config.verified?.llm && <VerifiedBadge text="API key verified" />}
           </Field>
         )}
       </Section>
@@ -210,57 +233,59 @@ export function Configuration() {
         </Field>
       </Section>
 
-      <Section icon={<Send size={15} />} title="Email Sending (SMTP)">
-        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
-          For Gmail, create an{' '}
-          <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer" className="text-accent hover:underline">app password</a>.
-        </p>
+      <Section
+        icon={<Send size={15} />}
+        title="Email Sending (SMTP)"
+        verified={config.verified?.smtp}
+        info={<InfoTooltip title={SETUP_STEPS.smtp.title} steps={SETUP_STEPS.smtp.steps} />}
+      >
         <div className="grid grid-cols-2 gap-3">
           <Field label="SMTP Host">
-            <input className="input w-full" value={config.smtp.host} onChange={(e) => update('smtp', { host: e.target.value })} placeholder="smtp.gmail.com" />
+            <input className="input w-full" value={config.smtp.host} onChange={(e) => { update('smtp', { host: e.target.value }); setVerified('smtp', false); }} placeholder="smtp.gmail.com" />
           </Field>
           <Field label="Port">
-            <input className="input w-full" type="number" value={config.smtp.port} onChange={(e) => update('smtp', { port: parseInt(e.target.value) || 587 })} />
+            <input className="input w-full" type="number" value={config.smtp.port} onChange={(e) => { update('smtp', { port: parseInt(e.target.value) || 587 }); setVerified('smtp', false); }} />
           </Field>
           <Field label="Username">
-            <input className="input w-full" value={config.smtp.user} onChange={(e) => update('smtp', { user: e.target.value })} placeholder="you@gmail.com" />
+            <input className="input w-full" value={config.smtp.user} onChange={(e) => { update('smtp', { user: e.target.value }); setVerified('smtp', false); }} placeholder="you@gmail.com" />
           </Field>
           <Field label="Password / App Password">
-            <input className="input w-full" type="password" value={config.smtp.pass} onChange={(e) => update('smtp', { pass: e.target.value })} />
+            <input className="input w-full" type="password" value={config.smtp.pass} onChange={(e) => { update('smtp', { pass: e.target.value }); setVerified('smtp', false); }} />
           </Field>
         </div>
         <Field label="From address" hint="Defaults to username">
           <input className="input w-full" value={config.smtp.from} onChange={(e) => update('smtp', { from: e.target.value })} placeholder="(optional)" />
         </Field>
-        <div>
+        <div className="flex items-center gap-3 flex-wrap">
           <button onClick={testSmtp} disabled={testingSmtp || !config.smtp.host} className="btn-secondary">
             {testingSmtp ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
             Test SMTP Connection
           </button>
+          {config.verified?.smtp && <VerifiedBadge text="SMTP connection verified" />}
         </div>
       </Section>
 
-      <Section icon={<MessageCircle size={15} />} title="WhatsApp via Twilio (optional)">
-        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
-          Get credentials from{' '}
-          <a href="https://www.twilio.com/console" target="_blank" rel="noreferrer" className="text-accent hover:underline">Twilio Console</a>.
-          Then activate the{' '}
-          <a href="https://www.twilio.com/console/sms/whatsapp/sandbox" target="_blank" rel="noreferrer" className="text-accent hover:underline">WhatsApp Sandbox</a>.
-        </p>
+      <Section
+        icon={<MessageCircle size={15} />}
+        title="WhatsApp via Twilio (optional)"
+        verified={config.verified?.twilio}
+        info={<InfoTooltip title={SETUP_STEPS.twilio.title} steps={SETUP_STEPS.twilio.steps} />}
+      >
         <Field label="Account SID">
-          <input className="input w-full" value={config.twilio.accountSid} onChange={(e) => update('twilio', { accountSid: e.target.value })} placeholder="AC..." />
+          <input className="input w-full" value={config.twilio.accountSid} onChange={(e) => { update('twilio', { accountSid: e.target.value }); setVerified('twilio', false); }} placeholder="AC..." />
         </Field>
         <Field label="Auth Token">
-          <input type="password" className="input w-full" value={config.twilio.authToken} onChange={(e) => update('twilio', { authToken: e.target.value })} />
+          <input type="password" className="input w-full" value={config.twilio.authToken} onChange={(e) => { update('twilio', { authToken: e.target.value }); setVerified('twilio', false); }} />
         </Field>
-        <Field label="From WhatsApp number" hint="The Twilio-provisioned sender (e.g. +14155238886 for the sandbox)">
+        <Field label="From WhatsApp number" hint="Sandbox default: +14155238886">
           <input className="input w-full" value={config.twilio.from} onChange={(e) => update('twilio', { from: e.target.value })} placeholder="+14155238886" />
         </Field>
-        <div>
+        <div className="flex items-center gap-3 flex-wrap">
           <button onClick={testTwilio} disabled={testingTwilio || !config.twilio.accountSid} className="btn-secondary">
             {testingTwilio ? <Loader2 size={14} className="animate-spin" /> : <MessageCircle size={14} />}
             Test Twilio Credentials
           </button>
+          {config.verified?.twilio && <VerifiedBadge text="Twilio account verified" />}
         </div>
       </Section>
 
@@ -268,10 +293,18 @@ export function Configuration() {
         <p className="text-[12px] text-text-secondary -mt-1 mb-2">
           Add a search API key for the Web Search node. Without one, Anthropic's built-in search is used as a fallback.
         </p>
-        <Field label="Tavily API Key" hint={<a href="https://app.tavily.com/" target="_blank" rel="noreferrer" className="text-accent hover:underline">Get one (1000 free/month)</a>}>
+        <Field
+          label="Tavily API Key"
+          info={<InfoTooltip title={SETUP_STEPS.tavily.title} steps={SETUP_STEPS.tavily.steps} />}
+          hint={<ExtLink href="https://app.tavily.com/" showIcon>Get one — 1,000 free/month</ExtLink>}
+        >
           <input type="password" className="input w-full" value={config.search.tavilyKey} onChange={(e) => update('search', { tavilyKey: e.target.value })} placeholder="tvly-..." />
         </Field>
-        <Field label="Brave Search API Key" hint={<a href="https://api.search.brave.com/app/keys" target="_blank" rel="noreferrer" className="text-accent hover:underline">Alternative — get one</a>}>
+        <Field
+          label="Brave Search API Key"
+          info={<InfoTooltip title={SETUP_STEPS.brave.title} steps={SETUP_STEPS.brave.steps} />}
+          hint={<>Alternative — <ExtLink href="https://api.search.brave.com/app/keys" showIcon>get one</ExtLink></>}
+        >
           <input type="password" className="input w-full" value={config.search.braveKey} onChange={(e) => update('search', { braveKey: e.target.value })} placeholder="BSA..." />
         </Field>
       </Section>
@@ -287,24 +320,55 @@ export function Configuration() {
   );
 }
 
-function Section({ icon, title, children }: { icon: React.ReactNode; title: string; children: React.ReactNode }) {
+function Section({
+  icon, title, verified, info, children,
+}: {
+  icon: React.ReactNode; title: string; verified?: boolean;
+  info?: React.ReactNode; children: React.ReactNode;
+}) {
   return (
     <section className="card p-5">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-7 h-7 rounded-win bg-bg-hover dark:bg-bg-dark-subtle flex items-center justify-center text-text-secondary">{icon}</div>
-        <h2 className="font-semibold text-sm">{title}</h2>
+        <h2 className="font-semibold text-sm flex-1 flex items-center gap-1.5">
+          {title}
+          {info}
+        </h2>
+        {verified && (
+          <span className="chip-success">
+            <Check size={11} /> Verified
+          </span>
+        )}
       </div>
       <div className="space-y-3.5">{children}</div>
     </section>
   );
 }
 
-function Field({ label, hint, children }: { label: string; hint?: React.ReactNode; children: React.ReactNode }) {
+function Field({
+  label, hint, info, children,
+}: {
+  label: string; hint?: React.ReactNode; info?: React.ReactNode; children: React.ReactNode;
+}) {
   return (
     <div>
-      <label className="label">{label}</label>
+      <label className="label">
+        {label}
+        {info}
+      </label>
       {children}
       {hint && <div className="mt-1 text-[11px] text-text-tertiary">{hint}</div>}
+    </div>
+  );
+}
+
+function VerifiedBadge({ text }: { text: string }) {
+  return (
+    <div className="inline-flex items-center gap-1.5 text-[12px] text-success font-medium">
+      <div className="w-4 h-4 rounded-full bg-success flex items-center justify-center">
+        <Check size={11} className="text-white" strokeWidth={3} />
+      </div>
+      {text}
     </div>
   );
 }

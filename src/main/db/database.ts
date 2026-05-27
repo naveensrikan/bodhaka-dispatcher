@@ -95,6 +95,7 @@ export async function initDatabase() {
     twilio: { accountSid: '', authToken: '', from: '' },
     search: { tavilyKey: '', braveKey: '' },
     ui: { theme: 'light', onboardingDone: false },
+    verified: { llm: false, smtp: false, twilio: false },
   };
 
   const stmt = db.prepare('SELECT key FROM config WHERE key = ?');

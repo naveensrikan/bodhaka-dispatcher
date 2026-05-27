@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, Zap,
+  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle,
 } from 'lucide-react';
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
+import { Disclaimer } from './components/Disclaimer';
+import { Logo } from './components/Logo';
+import { ExtLink } from './components/ExtLink';
 
 const navItems = [
   { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
@@ -18,6 +21,7 @@ const navItems = [
 export function App() {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [accepted, setAccepted] = useState(false);
 
   useEffect(() => {
     window.api.config.get().then((c) => {
@@ -37,16 +41,21 @@ export function App() {
 
   const pageTitle = navItems.find((n) => location.pathname.startsWith(n.to))?.label || 'Dashboard';
 
+  // Block the entire app until disclaimer is accepted
+  if (!accepted) return <Disclaimer onAccepted={() => setAccepted(true)} />;
+
   return (
     <div className="flex h-screen w-screen overflow-hidden">
       <Onboarding />
 
-      <aside className="w-56 shrink-0 border-r border-border dark:border-border-dark bg-bg-base dark:bg-bg-dark flex flex-col">
-        <div className="titlebar gap-2">
-          <div className="w-6 h-6 rounded bg-accent flex items-center justify-center no-drag">
-            <Zap size={12} className="text-white" strokeWidth={2.5} />
+      {/* Sidebar */}
+      <aside className="w-60 shrink-0 border-r border-border dark:border-border-dark bg-bg-base dark:bg-bg-dark flex flex-col">
+        <div className="titlebar gap-2.5">
+          <Logo size={26} />
+          <div className="leading-none no-drag flex flex-col">
+            <span className="text-[13px] font-semibold tracking-tight">Bodhaka Forge</span>
+            <span className="text-[9px] text-text-tertiary mt-0.5 uppercase tracking-widest">Build Agents</span>
           </div>
-          <span className="text-[13px] font-semibold no-drag">Agent Studio</span>
         </div>
 
         <nav className="flex-1 px-2 py-3 space-y-0.5 no-drag">
@@ -58,7 +67,7 @@ export function App() {
                 cn(
                   'flex items-center gap-2.5 px-2.5 py-1.5 rounded-win text-[13px] transition-colors',
                   isActive
-                    ? 'bg-accent-subtle dark:bg-accent-subtle-dark text-accent font-medium'
+                    ? 'bg-brand-subtle dark:bg-brand-subtle-dark text-brand dark:text-brand-light font-medium'
                     : 'text-text-primary dark:text-text-primary-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle'
                 )
               }
@@ -67,16 +76,37 @@ export function App() {
               <span>{item.label}</span>
             </NavLink>
           ))}
+
+          <div className="pt-3 mt-3 border-t border-border dark:border-border-dark">
+            <button
+              onClick={() => window.api.shell.openExternal('https://bodhaka.org/bodhaka-forge')}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-win text-[13px] text-text-primary dark:text-text-primary-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle transition-colors"
+            >
+              <HelpCircle size={15} strokeWidth={1.75} />
+              <span>Help & Docs</span>
+            </button>
+          </div>
         </nav>
 
-        <div className="px-3 py-2 border-t border-border dark:border-border-dark flex items-center justify-between no-drag">
-          <span className="text-[11px] text-text-tertiary">v0.3.0</span>
-          <button onClick={toggleTheme} className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary" title="Toggle theme">
-            {theme === 'light' ? <Moon size={14} /> : <Sun size={14} />}
-          </button>
+        {/* Footer */}
+        <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[10px] text-text-tertiary font-mono">v0.4.0</span>
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"
+              title="Toggle theme"
+            >
+              {theme === 'light' ? <Moon size={13} /> : <Sun size={13} />}
+            </button>
+          </div>
+          <ExtLink href="https://bodhaka.org" className="text-[10px] block leading-snug">
+            Product of BuoyantWave Learning Technologies LLP
+          </ExtLink>
         </div>
       </aside>
 
+      {/* Main */}
       <main className="flex-1 overflow-hidden flex flex-col bg-bg-base dark:bg-bg-dark">
         <div className="titlebar justify-between">
           <span className="text-[13px] font-medium text-text-primary dark:text-text-primary-dark">{pageTitle}</span>

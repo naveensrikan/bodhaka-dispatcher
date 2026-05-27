@@ -6,48 +6,62 @@ export default {
     extend: {
       fontFamily: {
         sans: ['"Segoe UI Variable"', '"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['"Segoe UI Variable Display"', '"Segoe UI Variable"', 'system-ui', 'sans-serif'],
         mono: ['"Cascadia Code"', '"Consolas"', '"JetBrains Mono"', 'monospace'],
       },
       colors: {
-        // Windows 11 Fluent 2 inspired palette
+        // Bodhaka Forge brand
+        brand: {
+          DEFAULT: '#1e2a8a',      // logo deep blue
+          dark: '#15205e',
+          light: '#3a4ab8',
+          subtle: '#e8eaf6',
+          'subtle-dark': '#1a1f3d',
+        },
+        gold: {
+          DEFAULT: '#f5b800',      // logo gold
+          dark: '#c99500',
+          light: '#ffd34d',
+        },
         bg: {
-          base: '#f3f3f3',         // Mica light
-          layer: '#ffffff',        // Card surface
-          subtle: '#fafafa',
-          hover: '#f5f5f5',
-          selected: '#ebebeb',
-          dark: '#202020',         // Mica dark
-          'dark-layer': '#2b2b2b',
-          'dark-subtle': '#272727',
+          base: '#f4f5f9',
+          layer: '#ffffff',
+          subtle: '#fafbfd',
+          hover: '#eef0f6',
+          selected: '#e3e7f1',
+          dark: '#0e1124',
+          'dark-layer': '#181d33',
+          'dark-subtle': '#141831',
         },
         border: {
-          DEFAULT: '#e5e5e5',
-          strong: '#d1d1d1',
-          dark: '#3a3a3a',
-          'dark-strong': '#4a4a4a',
+          DEFAULT: '#e3e5ec',
+          strong: '#cdd0dc',
+          dark: '#2a2f4d',
+          'dark-strong': '#3a3f5e',
         },
         text: {
-          primary: '#1a1a1a',
-          secondary: '#5a5a5a',
-          tertiary: '#8a8a8a',
-          'primary-dark': '#ffffff',
-          'secondary-dark': '#c8c8c8',
-          'tertiary-dark': '#8a8a8a',
+          primary: '#1a1d2e',
+          secondary: '#5a5e75',
+          tertiary: '#8a8fa6',
+          'primary-dark': '#f5f6fa',
+          'secondary-dark': '#c0c3d4',
+          'tertiary-dark': '#8a8fa6',
         },
         accent: {
-          DEFAULT: '#0078d4',       // Windows 11 blue
-          hover: '#106ebe',
-          pressed: '#005a9e',
-          subtle: '#deecf9',
-          'subtle-dark': '#1a3a5c',
+          DEFAULT: '#1e2a8a',
+          hover: '#15205e',
+          pressed: '#0d143f',
+          subtle: '#e8eaf6',
+          'subtle-dark': '#1a1f3d',
         },
         success: '#107c10',
         warning: '#9d5d00',
         danger:  '#c42b1c',
       },
       boxShadow: {
-        'win-card':   '0 2px 6px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06)',
-        'win-flyout': '0 8px 24px rgba(0,0,0,0.12), 0 2px 4px rgba(0,0,0,0.08)',
+        'win-card':   '0 2px 6px rgba(30,42,138,0.05), 0 1px 2px rgba(30,42,138,0.07)',
+        'win-flyout': '0 8px 24px rgba(30,42,138,0.12), 0 2px 4px rgba(30,42,138,0.08)',
+        'brand-glow': '0 0 0 3px rgba(30,42,138,0.15)',
       },
       borderRadius: {
         win: '6px',

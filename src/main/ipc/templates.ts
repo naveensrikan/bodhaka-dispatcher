@@ -121,7 +121,7 @@ function buildTemplates(): Template[] {
         const b = n('userInput', 320, 200, { label: 'Concept', value: 'Enter the concept here' });
         const c = n('llmPrompt', 560, 200, {
           label: 'Feynman-style explanation',
-          system: 'You explain concepts as if to a curious 12-year-old. Use vivid analogies. Build up slowly. End with one common misconception.',
+          system: 'You explain concepts as if to a curious 12-year-old. Use vivid analogies. Build up slowly. End with one common misconception. Use markdown formatting. For math, use LaTeX: $inline$ or $$display$$. For chemistry, use \\ce{} (e.g. $\\ce{NaCl}$).',
           prompt: 'Explain this concept:\n\n{{input}}',
           maxTokens: 1200,
         });
@@ -132,7 +132,7 @@ function buildTemplates(): Template[] {
     {
       id: 'argument-settler',
       name: 'Settle an Argument',
-      description: 'Get a balanced, fact-checked answer to friendly debates.',
+      description: 'Get a balanced, fact-checked answer to friendly debates. Supports math and chemistry notation.',
       category: 'recreation',
       icon: '⚖️',
       schedule: null,
@@ -142,8 +142,8 @@ function buildTemplates(): Template[] {
         const c = n('webSearch', 560, 200, { label: 'Get the facts' });
         const d = n('llmPrompt', 800, 200, {
           label: 'Verdict',
-          system: 'You settle arguments fairly. Present both sides briefly, then give a clear verdict with reasoning.',
-          prompt: 'Argument: {{input}}\n\nGive the verdict.',
+          system: 'You settle arguments fairly. Present both sides briefly, then give a clear verdict with reasoning. Use markdown formatting (**bold**, *italic*, headings). For any math, use LaTeX between $ for inline ($E=mc^2$) and $$ for display blocks. For chemistry, use \\ce{} (e.g. $\\ce{H2O}$).',
+          prompt: 'Argument: {{input}}\n\nGive the verdict with clear reasoning.',
           maxTokens: 800,
         });
         const f = n('displayResult', 1040, 200, { label: 'Show verdict' });

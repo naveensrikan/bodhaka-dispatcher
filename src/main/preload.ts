@@ -24,24 +24,26 @@ const api = {
       ipcRenderer.invoke('llm:testKey', provider, apiKey, ollamaUrl),
     chat: (params: unknown) => ipcRenderer.invoke('llm:chat', params),
   },
-  smtp: {
-    test: () => ipcRenderer.invoke('smtp:test'),
-  },
-  twilio: {
-    test: (accountSid: string, authToken: string) => ipcRenderer.invoke('twilio:test', accountSid, authToken),
-  },
+  smtp: { test: () => ipcRenderer.invoke('smtp:test') },
+  twilio: { test: (sid: string, token: string) => ipcRenderer.invoke('twilio:test', sid, token) },
   knowledge: {
     upload: (filePaths: string[]) => ipcRenderer.invoke('knowledge:upload', filePaths),
     list: () => ipcRenderer.invoke('knowledge:list'),
     delete: (id: string) => ipcRenderer.invoke('knowledge:delete', id),
     search: (query: string, topK?: number) => ipcRenderer.invoke('knowledge:search', query, topK),
   },
-  dialog: {
-    openFiles: (options?: any) => ipcRenderer.invoke('dialog:openFiles', options),
-  },
+  dialog: { openFiles: (options?: any) => ipcRenderer.invoke('dialog:openFiles', options) },
   templates: {
     list: () => ipcRenderer.invoke('templates:list'),
     create: (templateId: string) => ipcRenderer.invoke('templates:create', templateId),
+  },
+  acceptance: {
+    get: () => ipcRenderer.invoke('acceptance:get'),
+    accept: () => ipcRenderer.invoke('acceptance:accept'),
+    getPath: () => ipcRenderer.invoke('acceptance:getPath'),
+  },
+  shell: {
+    openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   },
   execution: {
     onRunUpdate: (callback: (data: unknown) => void) => {
