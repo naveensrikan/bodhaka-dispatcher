@@ -250,7 +250,7 @@ export function Configuration() {
         </label>
       </Section>
 
-      <Section icon={<Coins size={15} />} title="Currency (for cost display)">
+      <Section icon={<Coins size={15} />} title="Your Choice of Currency">
         <p className="text-[12px] text-text-secondary -mt-1 mb-2">
           Model prices are in USD. Choose your local currency and the conversion rate to see costs in your money on the Dashboard.
         </p>

@@ -45,7 +45,8 @@ export function Dashboard() {
   const setupComplete = setupSteps.every((s) => s.done);
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="dashboard-animated-bg min-h-full">
+      <div className="p-8 max-w-6xl mx-auto">
       <header className="mb-8">
         <h1 className="text-2xl font-semibold tracking-tight mb-1">
           {config?.profile?.name ? `Welcome back, ${config.profile.name.split(' ')[0]}` : 'Welcome'}
@@ -190,6 +191,7 @@ export function Dashboard() {
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }

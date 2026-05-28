@@ -195,3 +195,28 @@ html.dark .react-flow__controls button:hover { background: #181d33 !important; }
   background: #fff !important;
 }
 html.dark .react-flow__handle { background: #181d33 !important; }
+
+/* Animated pastel gradient background for the Dashboard */
+@keyframes bodhakaGradientShift {
+  0%   { background-position:   0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position:   0% 50%; }
+}
+
+.dashboard-animated-bg {
+  background: linear-gradient(120deg, #d6f5e3, #cdeafc, #eaf7c9, #d2f0ea, #e8f9d4);
+  background-size: 300% 300%;
+  animation: bodhakaGradientShift 18s ease infinite;
+}
+
+/* Slightly deeper tints in dark mode so text stays readable */
+html.dark .dashboard-animated-bg {
+  background: linear-gradient(120deg, #16302a, #15293f, #232e1c, #16302e, #1d3320);
+  background-size: 300% 300%;
+  animation: bodhakaGradientShift 18s ease infinite;
+}
+
+/* Respect reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-animated-bg { animation: none; }
+}
