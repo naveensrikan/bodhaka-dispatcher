@@ -57,6 +57,8 @@ jobs:
           path: |
             release/*.exe
             release/*.exe.blockmap
+            release/*.appx
+            release/*.msix
             release/latest.yml
           retention-days: 30
 

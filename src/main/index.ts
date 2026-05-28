@@ -258,7 +258,10 @@ if (!gotLock) {
 
     createWindow();
     createTray();
-    if (mainWindow && !isDev) setupAutoUpdater(mainWindow);
+    // electron-updater only works for the NSIS .exe build. When running as a
+    // Store/MSIX package, Windows handles updates, so we skip it to avoid errors.
+    const isWindowsStore = !!(process as any).windowsStore;
+    if (mainWindow && !isDev && !isWindowsStore) setupAutoUpdater(mainWindow);
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();
