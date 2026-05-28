@@ -67,10 +67,10 @@ function estimateCost(model: string, inTok: number, outTok: number): number {
 }
 
 function loadLLMConfig() {
-  const db = getDb();
-  const row = db.prepare('SELECT value FROM config WHERE key = ?').get('llm') as { value: string } | undefined;
-  if (!row) throw new Error('LLM config not set');
-  return JSON.parse(row.value) as { provider: Provider; apiKey: string; model: string; ollamaUrl?: string };
+  const { loadConfigKey } = require('../db/database');
+  const cfg = loadConfigKey('llm', null) as { provider: Provider; apiKey: string; model: string; ollamaUrl?: string } | null;
+  if (!cfg) throw new Error('LLM config not set');
+  return cfg;
 }
 
 export async function testProviderKey(provider: string, apiKey: string, ollamaUrl?: string): Promise<void> {

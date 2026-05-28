@@ -27,6 +27,7 @@ export function Configuration() {
   const [saving, setSaving] = useState(false);
   const [showKey, setShowKey] = useState(false);
   const [interestsText, setInterestsText] = useState('');
+  const [encrypted, setEncrypted] = useState<boolean | null>(null);
 
   const toast = useToast();
   const navigate = useNavigate();
@@ -38,6 +39,7 @@ export function Configuration() {
       const list = await window.api.llm.listModels(c.llm.provider);
       setModels(list);
     });
+    window.api.config.encryptionStatus().then((s) => setEncrypted(s.available)).catch(() => setEncrypted(null));
   }, []);
 
   function update<K extends keyof ConfigShape>(key: K, patch: Partial<ConfigShape[K]>) {
@@ -132,6 +134,21 @@ export function Configuration() {
           Configure your profile, AI provider, and delivery channels. All data stays on this device.
         </p>
       </header>
+
+      {encrypted !== null && (
+        <div className={`card p-3 flex items-center gap-2.5 ${encrypted ? 'border-success/30' : 'border-warning/40'}`}>
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 ${encrypted ? 'bg-success/15' : 'bg-warning/15'}`}>
+            <Key size={13} className={encrypted ? 'text-success' : 'text-warning'} />
+          </div>
+          <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark">
+            {encrypted ? (
+              <><strong className="text-text-primary dark:text-text-primary-dark">Your keys and passwords are encrypted on this device</strong> using Windows' built-in protection (tied to your login). They are stored only here, never sent to us or any server.</>
+            ) : (
+              <><strong className="text-text-primary dark:text-text-primary-dark">Keys are stored locally on this device only.</strong> OS encryption is unavailable on this system, so keys are kept in the app's local data. They are never sent to us or any server.</>
+            )}
+          </div>
+        </div>
+      )}
 
       <Section icon={<User size={15} />} title="Your Profile">
         <Field label="Name">

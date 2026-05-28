@@ -13,12 +13,9 @@ interface SearchResult {
  * 3. Fallback to Anthropic's built-in web_search tool if using Claude
  */
 export async function searchWeb(query: string, maxResults = 5): Promise<string> {
-  const db = getDb();
-  const searchRow = db.prepare('SELECT value FROM config WHERE key = ?').get('search') as { value: string } | undefined;
-  const llmRow = db.prepare('SELECT value FROM config WHERE key = ?').get('llm') as { value: string } | undefined;
-
-  const searchCfg = searchRow ? JSON.parse(searchRow.value) : {};
-  const llmCfg = llmRow ? JSON.parse(llmRow.value) : {};
+  const { loadConfigKey } = require('../db/database');
+  const searchCfg = loadConfigKey('search', {});
+  const llmCfg = loadConfigKey('llm', {});
 
   // Try Tavily first
   if (searchCfg.tavilyKey) {

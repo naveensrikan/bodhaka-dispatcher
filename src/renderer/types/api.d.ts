@@ -100,6 +100,7 @@ declare global {
       config: {
         get: () => Promise<ConfigShape>;
         update: (updates: Partial<ConfigShape>) => Promise<{ success: boolean }>;
+        encryptionStatus: () => Promise<{ available: boolean }>;
         sendEmailOtp: (email: string) => Promise<{ ok: boolean; error?: string }>;
         verifyEmailOtp: (email: string, code: string) => Promise<{ ok: boolean; error?: string }>;
         unlockEmail: () => Promise<{ ok: boolean }>;

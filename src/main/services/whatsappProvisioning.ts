@@ -18,10 +18,9 @@ export interface TemplateState {
 }
 
 function loadTwilio() {
-  const db = getDb();
-  const row = db.prepare('SELECT value FROM config WHERE key = ?').get('twilio') as { value: string } | undefined;
-  if (!row) throw new Error('Twilio not configured. Add credentials in Settings.');
-  const cfg = JSON.parse(row.value);
+  const { loadConfigKey } = require('../db/database');
+  const cfg = loadConfigKey('twilio', null);
+  if (!cfg) throw new Error('Twilio not configured. Add credentials in Settings.');
   if (!cfg.accountSid || !cfg.authToken) throw new Error('Twilio credentials incomplete.');
   return cfg as { accountSid: string; authToken: string; from: string };
 }

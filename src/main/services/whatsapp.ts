@@ -1,4 +1,4 @@
-import { getDb } from '../db/database';
+import { getDb, loadConfigKey } from '../db/database';
 
 /**
  * WhatsApp via Twilio. Users provide their Twilio Account SID, Auth Token,
@@ -6,11 +6,8 @@ import { getDb } from '../db/database';
  * to avoid pulling in their SDK (smaller bundle, fewer native deps).
  */
 export async function sendWhatsApp(to: string, body: string): Promise<{ sent: boolean; sid?: string; error?: string }> {
-  const db = getDb();
-  const row = db.prepare('SELECT value FROM config WHERE key = ?').get('twilio') as { value: string } | undefined;
-  if (!row) return { sent: false, error: 'Twilio not configured. Add credentials in Settings.' };
-
-  const cfg = JSON.parse(row.value) as { accountSid: string; authToken: string; from: string };
+  const cfg = loadConfigKey('twilio', null) as { accountSid: string; authToken: string; from: string } | null;
+  if (!cfg) return { sent: false, error: 'Twilio not configured. Add credentials in Settings.' };
   if (!cfg.accountSid || !cfg.authToken || !cfg.from) {
     return { sent: false, error: 'Twilio credentials incomplete. Check Settings.' };
   }

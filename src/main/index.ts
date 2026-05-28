@@ -52,6 +52,39 @@ function migrateLegacyData() {
   }
 }
 
+/**
+ * One-time (idempotent) migration: re-encrypt any secret fields that are still
+ * stored as plaintext, so existing users' keys get protected on first run after
+ * the update. Safe to run every launch — already-encrypted values are skipped.
+ */
+function migrateEncryptSecrets() {
+  try {
+    const { getDb } = require('./db/database');
+    const { SECRET_FIELDS, encryptConfigValue, encryptionAvailable } = require('./services/secrets');
+    if (!encryptionAvailable()) {
+      logger.warn('OS encryption unavailable — secrets remain in local storage unencrypted');
+      return;
+    }
+    const db = getDb();
+    let changed = 0;
+    for (const key of Object.keys(SECRET_FIELDS)) {
+      const row = db.prepare('SELECT value FROM config WHERE key = ?').get(key) as { value: string } | undefined;
+      if (!row) continue;
+      let parsed: any;
+      try { parsed = JSON.parse(row.value); } catch { continue; }
+      const encrypted = encryptConfigValue(key, parsed);
+      const newVal = JSON.stringify(encrypted);
+      if (newVal !== row.value) {
+        db.prepare('UPDATE config SET value = ?, updated_at = ? WHERE key = ?').run(newVal, Date.now(), key);
+        changed++;
+      }
+    }
+    if (changed > 0) logger.info(`encrypted secrets in ${changed} config section(s) at rest`);
+  } catch (err) {
+    logger.error(`secret encryption migration failed (non-fatal): ${err}`);
+  }
+}
+
 function iconPath() {
   return path.join(__dirname, '..', '..', 'resources', 'icon.ico');
 }
@@ -218,6 +251,7 @@ if (!gotLock) {
     try {
       migrateLegacyData();
       await initDatabase();
+      migrateEncryptSecrets();
       registerConfigHandlers();
       registerAgentHandlers();
       registerLLMHandlers();

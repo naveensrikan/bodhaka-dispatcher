@@ -10,6 +10,25 @@ export function getDb(): Database.Database {
   return db;
 }
 
+/**
+ * Load a single config blob by key, parsed and with any secret fields DECRYPTED.
+ * All services that need plaintext secrets (API keys, passwords, tokens) should
+ * use this instead of reading the config table directly, so they never receive
+ * encrypted ciphertext.
+ */
+export function loadConfigKey<T = any>(key: string, fallback: T = {} as T): T {
+  const row = getDb().prepare('SELECT value FROM config WHERE key = ?').get(key) as { value: string } | undefined;
+  if (!row) return fallback;
+  let parsed: any;
+  try { parsed = JSON.parse(row.value); } catch { return fallback; }
+  try {
+    const { decryptConfigValue } = require('../services/secrets');
+    return decryptConfigValue(key, parsed) as T;
+  } catch {
+    return parsed as T;
+  }
+}
+
 export async function initDatabase() {
   const userDataPath = app.getPath('userData');
   if (!fs.existsSync(userDataPath)) fs.mkdirSync(userDataPath, { recursive: true });

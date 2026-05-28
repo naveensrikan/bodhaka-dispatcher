@@ -77,9 +77,8 @@ async function getLocalEmbedder(): Promise<any> {
  * 3. If both fail → return nulls (search falls back to keyword matching)
  */
 export async function embedTexts(texts: string[]): Promise<(number[] | null)[]> {
-  const db = getDb();
-  const row = db.prepare('SELECT value FROM config WHERE key = ?').get('llm') as { value: string } | undefined;
-  const cfg = row ? JSON.parse(row.value) : {};
+  const { loadConfigKey } = require('../db/database');
+  const cfg = loadConfigKey('llm', {});
 
   // Path 1: OpenAI embeddings
   if (cfg.provider === 'openai' && cfg.apiKey) {

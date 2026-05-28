@@ -4,6 +4,7 @@ const api = {
   config: {
     get: () => ipcRenderer.invoke('config:get'),
     update: (updates: Record<string, unknown>) => ipcRenderer.invoke('config:update', updates),
+    encryptionStatus: () => ipcRenderer.invoke('config:encryptionStatus'),
     sendEmailOtp: (email: string) => ipcRenderer.invoke('otp:sendEmail', email),
     verifyEmailOtp: (email: string, code: string) => ipcRenderer.invoke('otp:verifyEmail', email, code),
     unlockEmail: () => ipcRenderer.invoke('otp:unlockEmail'),
