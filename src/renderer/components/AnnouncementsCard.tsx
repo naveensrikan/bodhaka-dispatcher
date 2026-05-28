@@ -25,8 +25,8 @@ export function AnnouncementsCard() {
 
   return (
     <div
-      className="rounded-win p-4 mb-6 border"
-      style={{ background: '#eef5ff', borderColor: 'rgba(0,0,0,0.08)' }}
+      className="rounded-win p-4 mb-6"
+      style={{ background: '#eef5ff', border: '1px solid #000000' }}
     >
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2">

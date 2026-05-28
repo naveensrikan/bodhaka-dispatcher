@@ -213,8 +213,8 @@ function StatCard({ icon, label, value, sub, action, tint }: { icon: React.React
   const bg = tint ? tints[tint] : '#ffffff';
   return (
     <div
-      className="rounded-win p-4 border"
-      style={{ background: bg, borderColor: 'rgba(0,0,0,0.08)' }}
+      className="rounded-win p-4"
+      style={{ background: bg, border: '1px solid #000000' }}
     >
       <div className="flex items-center gap-1.5 mb-2.5" style={{ color: '#000000' }}>
         {icon}
