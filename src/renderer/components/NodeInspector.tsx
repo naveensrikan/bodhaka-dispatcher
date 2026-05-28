@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link as LinkComp } from 'react-router-dom';
-import { X, AlertTriangle, CheckCircle2, Clock as ClockIcon } from 'lucide-react';
+import { X, AlertTriangle, Check, CheckCircle2, Clock as ClockIcon } from 'lucide-react';
 import { NODE_META } from './FlowNode';
 import { CronBuilder } from './CronBuilder';
 import { MemoryPromptField } from './MemoryPromptField';

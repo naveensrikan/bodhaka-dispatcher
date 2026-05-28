@@ -333,9 +333,14 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
       const templateName = node.data.templateName;
 
       if (templateName) {
-        const variables = node.data.variables && Object.keys(node.data.variables).length > 0
+        // Pass the agent's generated text as variable "1" by default. If the
+        // node specifies explicit variables, merge them (explicit wins).
+        // sendTemplatedWhatsApp normalizes/fills against the template's declared
+        // placeholders so Twilio always receives a valid ContentVariables set.
+        const explicit = (node.data.variables && typeof node.data.variables === 'object')
           ? node.data.variables as Record<string, string>
-          : { '1': inputText };
+          : {};
+        const variables: Record<string, string> = { '1': inputText, ...explicit };
         const result = await sendTemplatedWhatsApp(templateName, to, variables);
         if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
         log(ctx, `  WhatsApp template "${templateName}" sent to ${to}`);

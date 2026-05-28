@@ -254,6 +254,14 @@ if (!gotLock) {
         return shell.openPath(dir);
       });
 
+      // Report how this build receives updates, so the UI shows the right thing
+      ipcMain.handle('app:updateChannel', () => {
+        const isWindowsStore = !!(process as any).windowsStore;
+        if (isWindowsStore) return 'store';   // MSIX: Microsoft Store handles updates
+        if (isDev) return 'dev';              // dev: no updates
+        return 'github';                      // .exe: electron-updater
+      });
+
       applyLaunchOnStartup();
       startScheduler();
 

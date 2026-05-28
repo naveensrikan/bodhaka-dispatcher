@@ -408,10 +408,26 @@ export async function sendTemplatedWhatsApp(
     return { sent: false, error: `Template "${spec.displayName}" is not yet approved. Check the WhatsApp Templates page.` };
   }
 
-  // Truncate each variable to 800 chars to stay under template body limit (1024 total)
+  // Twilio's ContentVariables must be a JSON object whose keys are the numeric
+  // placeholders the template declares ("1", "2", ...). If keys are missing or
+  // mismatched, Twilio returns "The Content Variables parameter is invalid".
+  // So we build the map strictly from the template's declared variables.
+  const declared = Object.keys(spec.variableSamples || {});
   const safeVars: Record<string, string> = {};
-  for (const [k, v] of Object.entries(variables)) {
-    safeVars[k] = (v || '').slice(0, 800);
+
+  if (declared.length > 0) {
+    // Fill each declared placeholder. Prefer a provided value (by numeric key),
+    // fall back to the template's sample, then to a single space (Twilio rejects
+    // empty strings for a declared variable).
+    for (const key of declared) {
+      const provided = variables[key];
+      const sample = spec.variableSamples[key];
+      let val = (provided != null && provided !== '') ? provided : (sample || ' ');
+      safeVars[key] = String(val).slice(0, 800);
+    }
+  } else {
+    // Template declares no variables — send an empty object (valid for Twilio).
+    // Do NOT inject a "1" here, that would be invalid for a no-variable template.
   }
 
   const fromAddr = cfg.from.startsWith('whatsapp:') ? cfg.from : `whatsapp:${cfg.from.replace(/\s/g, '')}`;
@@ -421,8 +437,11 @@ export async function sendTemplatedWhatsApp(
     From: fromAddr,
     To: toAddr,
     ContentSid: contentSid,
-    ContentVariables: JSON.stringify(safeVars),
   });
+  // Only include ContentVariables when there are variables to send
+  if (Object.keys(safeVars).length > 0) {
+    params.set('ContentVariables', JSON.stringify(safeVars));
+  }
 
   try {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {

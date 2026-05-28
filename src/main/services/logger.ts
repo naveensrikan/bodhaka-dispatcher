@@ -1,35 +1,66 @@
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 /**
- * Simple file logger. Writes to <userData>/logs/main.log.
- * Captures startup, errors, and crash/hang diagnostics so problems in the
- * packaged app (where there is no console) can be inspected after the fact.
+ * Bulletproof file logger. Writes to <userData>/logs/main.log.
+ * Designed to NEVER throw and NEVER lose the ability to log:
+ *  - Falls back to a temp dir if userData is unavailable (e.g. called too early).
+ *  - Creates the directory on every write attempt (cheap, survives deletion).
+ *  - Swallows all I/O errors so logging can never crash the app.
  */
 
-let logFilePath: string | null = null;
+let logDirCached: string | null = null;
 
-function ensureLogFile(): string {
-  if (logFilePath) return logFilePath;
-  const dir = path.join(app.getPath('userData'), 'logs');
-  try { fs.mkdirSync(dir, { recursive: true }); } catch { /* ignore */ }
-  logFilePath = path.join(dir, 'main.log');
-  return logFilePath;
+function resolveLogDir(): string {
+  // Try the proper userData path first
+  try {
+    if (app && app.getPath) {
+      const dir = path.join(app.getPath('userData'), 'logs');
+      return dir;
+    }
+  } catch { /* app not ready yet */ }
+  // Fallback: a stable temp location so we never lose logging entirely
+  try {
+    return path.join(os.tmpdir(), 'bodhaka-forge', 'logs');
+  } catch {
+    return path.join('.', 'logs');
+  }
 }
 
+function ensureLogDir(): string {
+  const dir = resolveLogDir();
+  try { fs.mkdirSync(dir, { recursive: true }); } catch { /* ignore */ }
+  logDirCached = dir;
+  return dir;
+}
+
+function logFile(): string {
+  return path.join(ensureLogDir(), 'main.log');
+}
+
+/**
+ * Returns the directory where logs are stored. Always returns a usable path,
+ * creating it if needed, so the "Open logs folder" button never fails.
+ */
 export function getLogDir(): string {
-  return path.join(app.getPath('userData'), 'logs');
+  return ensureLogDir();
 }
 
 function write(level: string, msg: string) {
   const line = `[${new Date().toISOString()}] [${level}] ${msg}\n`;
   try {
-    fs.appendFileSync(ensureLogFile(), line);
-  } catch { /* never let logging crash the app */ }
+    fs.appendFileSync(logFile(), line);
+  } catch {
+    // Last-resort: try once more after forcing the dir, then give up silently.
+    try { ensureLogDir(); fs.appendFileSync(logFile(), line); } catch { /* never crash */ }
+  }
   // Also echo to console for dev
-  if (level === 'ERROR') console.error(line.trim());
-  else console.log(line.trim());
+  try {
+    if (level === 'ERROR') console.error(line.trim());
+    else console.log(line.trim());
+  } catch { /* ignore */ }
 }
 
 export const logger = {
@@ -43,7 +74,7 @@ export const logger = {
  */
 function rotateIfLarge() {
   try {
-    const p = ensureLogFile();
+    const p = logFile();
     if (fs.existsSync(p)) {
       const stat = fs.statSync(p);
       if (stat.size > 2 * 1024 * 1024) { // 2 MB
@@ -62,6 +93,7 @@ function rotateIfLarge() {
 export function installCrashDiagnostics(getWindow: () => Electron.BrowserWindow | null) {
   rotateIfLarge();
   logger.info(`=== Bodhaka Forge starting (v${app.getVersion()}, ${process.platform}, electron ${process.versions.electron}) ===`);
+  logger.info(`log file location: ${logFile()}`);
 
   process.on('uncaughtException', (err) => {
     logger.error(`uncaughtException: ${err?.stack || err}`);

@@ -101,6 +101,15 @@ export function App() {
             </button>
             <button
               onClick={async () => {
+                const channel = await window.api.shell.updateChannel();
+                if (channel === 'store') {
+                  alert('Updates for this version are delivered automatically through the Microsoft Store. You do not need to check manually. Open the Microsoft Store and check "Library" to see or trigger updates.');
+                  return;
+                }
+                if (channel === 'dev') {
+                  alert('Update checking is only available in the installed app.');
+                  return;
+                }
                 const r = await window.api.update.check();
                 if (r.ok && !r.version) alert('You are on the latest version.');
                 else if (!r.ok) alert('Could not check for updates right now. Please try again later.');
@@ -117,7 +126,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v1.0.5</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v1.0.7</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"

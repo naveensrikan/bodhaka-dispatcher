@@ -155,6 +155,7 @@ declare global {
         openExternal: (url: string) => Promise<void>;
         forceQuit: () => Promise<void>;
         openLogs: () => Promise<string>;
+        updateChannel: () => Promise<'store' | 'github' | 'dev'>;
       };
       catchup: {
         find: () => Promise<any[]>;
