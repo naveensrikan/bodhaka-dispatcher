@@ -14,6 +14,7 @@ import { registerWhatsAppHandlers } from './ipc/whatsapp';
 import { startScheduler } from './services/scheduler';
 import { findMissedRuns, runMissed } from './services/catchup';
 import { setupAutoUpdater } from './services/updater';
+import { logger, installCrashDiagnostics, getLogDir } from './services/logger';
 
 const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_RENDERER_URL;
 
@@ -211,6 +212,8 @@ if (!gotLock) {
   app.whenReady().then(async () => {
     if (process.platform === 'win32') app.setAppUserModelId('Bodhaka Forge');
 
+    installCrashDiagnostics(() => mainWindow);
+
     try {
       migrateLegacyData();
       await initDatabase();
@@ -242,6 +245,13 @@ if (!gotLock) {
         quitConfirmed = true;
         isQuitting = true;
         app.quit();
+      });
+
+      // Open the logs folder so users can find crash/hang logs
+      ipcMain.handle('app:openLogs', () => {
+        const dir = getLogDir();
+        try { fs.mkdirSync(dir, { recursive: true }); } catch { /* ignore */ }
+        return shell.openPath(dir);
       });
 
       applyLaunchOnStartup();

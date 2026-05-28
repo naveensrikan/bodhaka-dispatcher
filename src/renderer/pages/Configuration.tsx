@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Key, Mail, Send, Check, Loader2, Eye, EyeOff,
-  MessageCircle, Search as SearchIcon, Award, Coins, AlertTriangle, Clock,
+  MessageCircle, Search as SearchIcon, Award, Coins, AlertTriangle, Clock, FileText,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { InfoTooltip } from '../components/InfoTooltip';
@@ -421,6 +421,15 @@ export function Configuration() {
           <AlertTriangle size={12} className="inline mr-1 text-warning" />
           Honest note: no app can run while your PC is fully <strong>off</strong>. Scheduled agents fire only when your PC is on. If your PC was off at the scheduled time, Bodhaka Forge catches up the next time you turn it on. For guaranteed on-time delivery even when your PC is off, a cloud version would be needed.
         </div>
+      </Section>
+
+      <Section icon={<FileText size={15} />} title="Troubleshooting">
+        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
+          If the app misbehaves or closes unexpectedly, the log files help find out why. Open the folder and share the most recent <span className="font-mono">main.log</span> so the issue can be fixed.
+        </p>
+        <button onClick={() => window.api.shell.openLogs()} className="btn-secondary w-fit">
+          <FileText size={14} /> Open logs folder
+        </button>
       </Section>
 
       <div className="sticky bottom-0 -mx-8 px-8 py-3 bg-bg-base/95 dark:bg-bg-dark/95 backdrop-blur border-t border-border dark:border-border-dark flex justify-end gap-2">

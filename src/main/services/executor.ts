@@ -432,6 +432,7 @@ export async function executeAgent(agentId: string): Promise<{ runId: string; st
     return { runId, status: 'success' };
   } catch (err: any) {
     log(ctx, `✗ Failed: ${err.message}`);
+    try { require('./logger').logger.error(`agent "${agent.name}" (${agentId}) failed: ${err?.stack || err.message}`); } catch {}
     db.prepare(`UPDATE agent_runs SET status = ?, finished_at = ?, logs = ?, error = ?, cost = ? WHERE id = ?`)
       .run('failed', Date.now(), JSON.stringify(ctx.logs), err.message, ctx.totalCost, runId);
 

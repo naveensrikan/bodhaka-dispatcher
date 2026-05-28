@@ -153,6 +153,7 @@ declare global {
       shell: {
         openExternal: (url: string) => Promise<void>;
         forceQuit: () => Promise<void>;
+        openLogs: () => Promise<string>;
       };
       catchup: {
         find: () => Promise<any[]>;
