@@ -9,6 +9,7 @@ import { AgentBuilder } from './pages/AgentBuilder';
 import { MyAgents } from './pages/MyAgents';
 import { Templates } from './pages/Templates';
 import { RunHistory } from './pages/RunHistory';
+import { WhatsAppTemplates } from './pages/WhatsAppTemplates';
 import { ToastProvider } from './components/Toast';
 import './styles/globals.css';
 
@@ -30,6 +31,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <Route path="agents/new" element={<AgentBuilder />} />
             <Route path="agents/:id" element={<AgentBuilder />} />
             <Route path="templates" element={<Templates />} />
+            <Route path="whatsapp-templates" element={<WhatsAppTemplates />} />
             <Route path="history" element={<RunHistory />} />
           </Route>
         </Routes>

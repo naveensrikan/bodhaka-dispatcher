@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle,
+  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle,
 } from 'lucide-react';
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
@@ -10,12 +10,13 @@ import { Logo } from './components/Logo';
 import { ExtLink } from './components/ExtLink';
 
 const navItems = [
-  { to: '/dashboard',    icon: LayoutDashboard, label: 'Dashboard' },
-  { to: '/agents',       icon: Bot,             label: 'My Agents' },
-  { to: '/templates',    icon: Sparkles,        label: 'Templates' },
-  { to: '/knowledge',    icon: Library,         label: 'Knowledge Base' },
-  { to: '/history',      icon: History,         label: 'Run History' },
-  { to: '/configuration', icon: Settings,       label: 'Settings' },
+  { to: '/dashboard',          icon: LayoutDashboard, label: 'Dashboard' },
+  { to: '/agents',             icon: Bot,             label: 'My Agents' },
+  { to: '/templates',          icon: Sparkles,        label: 'Agent Templates' },
+  { to: '/knowledge',          icon: Library,         label: 'Knowledge Base' },
+  { to: '/whatsapp-templates', icon: MessageCircle,   label: 'WhatsApp Templates' },
+  { to: '/history',            icon: History,         label: 'Run History' },
+  { to: '/configuration',      icon: Settings,        label: 'Settings' },
 ];
 
 export function App() {
@@ -54,7 +55,7 @@ export function App() {
           <Logo size={26} />
           <div className="leading-none no-drag flex flex-col">
             <span className="text-[13px] font-semibold tracking-tight">Bodhaka Forge</span>
-            <span className="text-[9px] text-text-tertiary mt-0.5 uppercase tracking-widest">Build Agents</span>
+            <span className="text-[9px] text-text-tertiary mt-0.5 uppercase tracking-widest">Build AI Agents</span>
           </div>
         </div>
 
@@ -91,7 +92,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v0.4.0</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v0.5.0</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"

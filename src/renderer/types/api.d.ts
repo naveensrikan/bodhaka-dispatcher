@@ -61,6 +61,26 @@ export interface AcceptanceRecord {
   platform: string;
 }
 
+export interface WhatsAppTemplateState {
+  name: string;
+  displayName: string;
+  description: string;
+  category: string;
+  contentSid: string | null;
+  approvalStatus: 'not_provisioned' | 'received' | 'pending' | 'approved' | 'rejected' | 'unsubmitted';
+  rejectionReason: string | null;
+  createdAt: number | null;
+  updatedAt: number | null;
+}
+
+export interface ProvisionResult {
+  provisioned?: number;
+  skipped?: number;
+  failed?: { name: string; error: string }[];
+  states?: WhatsAppTemplateState[];
+  error?: string;
+}
+
 declare global {
   interface Window {
     api: {
@@ -103,6 +123,11 @@ declare global {
         get: () => Promise<AcceptanceRecord | null>;
         accept: () => Promise<AcceptanceRecord>;
         getPath: () => Promise<string>;
+      };
+      whatsapp: {
+        listTemplates: () => Promise<WhatsAppTemplateState[] | { error: string }>;
+        provisionTemplates: () => Promise<ProvisionResult>;
+        refreshStatus: () => Promise<WhatsAppTemplateState[] | { error: string }>;
       };
       shell: {
         openExternal: (url: string) => Promise<void>;

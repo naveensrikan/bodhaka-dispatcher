@@ -8,7 +8,7 @@ export const SETUP_STEPS: Record<string, { title: string; steps: SetupStep[] }> 
       { step: 2, text: 'Sign up with email, Google, or GitHub. Verify your email.' },
       { step: 3, text: 'Click your profile (top right) → "API Keys".' },
       { step: 4, text: 'Click "Create Key", name it (e.g. "Bodhaka Forge"), and copy the key (starts with sk-ant-...).' },
-      { step: 5, text: 'Paste the key into the field below and click Test. New accounts get $5 free credit.' },
+      { step: 5, text: 'Paste the key into the field below and click Test.' },
     ],
   },
   openai: {

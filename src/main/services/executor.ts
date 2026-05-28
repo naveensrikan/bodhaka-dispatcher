@@ -6,6 +6,7 @@ import { getDb } from '../db/database';
 import { callLLM } from './llm';
 import { sendEmail } from './email';
 import { sendWhatsApp } from './whatsapp';
+import { sendTemplatedWhatsApp } from './whatsappProvisioning';
 import { searchWeb } from './search';
 import { broadcastRunUpdate } from '../ipc/execution';
 
@@ -236,15 +237,31 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     case 'sendWhatsApp': {
       const to = node.data.to;
       if (!to) throw new Error('WhatsApp recipient is empty');
-      const result = await sendWhatsApp(to, inputText);
-      if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
-      log(ctx, `  WhatsApp sent to ${to}`);
-      return result;
+      const templateName = node.data.templateName;
+
+      if (templateName) {
+        // Production: use approved Content Template
+        // Build variables — by convention, {{1}} is the main body unless the
+        // node has explicit variable mapping in node.data.variables
+        const variables = node.data.variables && Object.keys(node.data.variables).length > 0
+          ? node.data.variables as Record<string, string>
+          : { '1': inputText };  // simple case: dump upstream into var 1
+        const result = await sendTemplatedWhatsApp(templateName, to, variables);
+        if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
+        log(ctx, `  WhatsApp template "${templateName}" sent to ${to}`);
+        return result;
+      } else {
+        // Sandbox / freeform mode (legacy, for users in Twilio sandbox)
+        const result = await sendWhatsApp(to, inputText);
+        if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
+        log(ctx, `  WhatsApp (freeform) sent to ${to}`);
+        return result;
+      }
     }
 
     case 'saveToFile': {
       const filename = (node.data.filename || `output-${Date.now()}.txt`).replace(/[<>:"/\\|?*]/g, '_');
-      const outDir = path.join(app.getPath('documents'), 'Student Agent Builder');
+      const outDir = path.join(app.getPath('documents'), 'Bodhaka Forge');
       if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
       const filepath = path.join(outDir, filename);
       fs.writeFileSync(filepath, inputText, 'utf-8');

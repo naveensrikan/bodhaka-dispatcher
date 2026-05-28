@@ -130,10 +130,10 @@ export function Configuration() {
 
       <Section icon={<User size={15} />} title="Your Profile">
         <Field label="Name">
-          <input className="input w-full" value={config.profile.name} onChange={(e) => update('profile', { name: e.target.value })} placeholder="e.g. Naveen Srikan" />
+          <input className="input w-full" value={config.profile.name} onChange={(e) => update('profile', { name: e.target.value })} placeholder="e.g. Aarav Mehta" />
         </Field>
         <Field label="Grade / Year">
-          <input className="input w-full" value={config.profile.grade} onChange={(e) => update('profile', { grade: e.target.value })} placeholder="e.g. Class 12, 2nd year B.Tech, MBA student" />
+          <input className="input w-full" value={config.profile.grade} onChange={(e) => update('profile', { grade: e.target.value })} placeholder="e.g. 2nd year B.Tech, MBA student" />
         </Field>
         <Field label="Hobbies & Interests" hint="Separate with commas. These help personalize your agents' tone.">
           <input

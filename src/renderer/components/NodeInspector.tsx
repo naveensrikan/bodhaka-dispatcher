@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
+import { Link as LinkComp } from 'react-router-dom';
+import { X, AlertTriangle, CheckCircle2, Clock as ClockIcon } from 'lucide-react';
 import { NODE_META } from './FlowNode';
 
 interface NodeInspectorProps {
@@ -180,26 +181,140 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
         )}
 
         {node.type === 'sendWhatsApp' && (
-          <div>
-            <label className="label">To (phone number with country code)</label>
-            <input className="input w-full" value={data.to || ''} onChange={(e) => update({ to: e.target.value })} placeholder={defaultWhatsApp || '+91 98765 43210'} />
-            {defaultWhatsApp && data.to !== defaultWhatsApp && (
-              <button type="button" onClick={() => update({ to: defaultWhatsApp })} className="mt-1 text-[11px] text-accent hover:underline">
-                Use my number ({defaultWhatsApp})
-              </button>
-            )}
-            <p className="text-[11px] text-text-tertiary mt-2">Requires Twilio credentials in Settings → WhatsApp.</p>
-          </div>
+          <WhatsAppNodeFields data={data} update={update} defaultWhatsApp={defaultWhatsApp} />
         )}
 
         {node.type === 'saveToFile' && (
           <div>
             <label className="label">Filename</label>
             <input className="input w-full" value={data.filename || ''} onChange={(e) => update({ filename: e.target.value })} placeholder="output.txt" />
-            <p className="text-[11px] text-text-tertiary mt-1.5">Saved to Documents/Student Agent Builder/.</p>
+            <p className="text-[11px] text-text-tertiary mt-1.5">Saved to Documents/Bodhaka Forge/.</p>
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+function WhatsAppNodeFields({
+  data, update, defaultWhatsApp,
+}: {
+  data: Record<string, any>;
+  update: (patch: Record<string, any>) => void;
+  defaultWhatsApp?: string;
+}) {
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [twilioConfigured, setTwilioConfigured] = useState(true);
+
+  useEffect(() => {
+    window.api.whatsapp.listTemplates().then((result: any) => {
+      if (result?.error) {
+        setTwilioConfigured(false);
+      } else if (Array.isArray(result)) {
+        setTemplates(result);
+      }
+      setLoading(false);
+    });
+  }, []);
+
+  const selectedTemplate = templates.find((t) => t.name === data.templateName);
+  const approvedTemplates = templates.filter((t) => t.approvalStatus === 'approved');
+
+  return (
+    <>
+      <div>
+        <label className="label">To (phone number with country code)</label>
+        <input
+          className="input w-full"
+          value={data.to || ''}
+          onChange={(e) => update({ to: e.target.value })}
+          placeholder={defaultWhatsApp || '+91 98765 43210'}
+        />
+        {defaultWhatsApp && data.to !== defaultWhatsApp && (
+          <button
+            type="button"
+            onClick={() => update({ to: defaultWhatsApp })}
+            className="mt-1 text-[11px] text-brand hover:underline"
+          >
+            Use my number ({defaultWhatsApp})
+          </button>
+        )}
+      </div>
+
+      {!twilioConfigured && (
+        <div className="p-3 rounded-win bg-warning/10 border border-warning/30 text-[12px]">
+          <div className="flex items-start gap-2">
+            <AlertTriangle size={13} className="text-warning shrink-0 mt-0.5" />
+            <div>
+              <p className="font-medium mb-1">Twilio not configured</p>
+              <LinkComp to="/configuration" className="text-brand hover:underline">
+                Go to Settings → WhatsApp
+              </LinkComp>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {twilioConfigured && (
+        <div>
+          <label className="label">Template</label>
+          {loading ? (
+            <div className="text-[12px] text-text-tertiary py-2">Loading templates...</div>
+          ) : approvedTemplates.length === 0 ? (
+            <div className="p-3 rounded-win bg-warning/10 border border-warning/30 text-[12px]">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={13} className="text-warning shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium mb-1">No approved templates yet</p>
+                  <LinkComp to="/whatsapp-templates" className="text-brand hover:underline">
+                    Provision templates →
+                  </LinkComp>
+                  <p className="mt-1 text-text-tertiary">Or use sandbox freeform mode (leave template unset).</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
+              <select
+                className="input w-full"
+                value={data.templateName || ''}
+                onChange={(e) => update({ templateName: e.target.value || undefined })}
+              >
+                <option value="">— Sandbox freeform (no template) —</option>
+                {approvedTemplates.map((t) => (
+                  <option key={t.name} value={t.name}>
+                    ✓ {t.displayName}
+                  </option>
+                ))}
+              </select>
+              {templates.some((t) => t.approvalStatus === 'pending' || t.approvalStatus === 'received') && (
+                <p className="text-[11px] text-text-tertiary mt-1.5 flex items-center gap-1">
+                  <ClockIcon size={10} />
+                  {templates.filter((t) => t.approvalStatus === 'pending' || t.approvalStatus === 'received').length} more pending approval
+                </p>
+              )}
+            </>
+          )}
+
+          {selectedTemplate && (
+            <div className="mt-3 p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle border border-border dark:border-border-dark text-[11px]">
+              <div className="flex items-center gap-1 mb-1.5">
+                <CheckCircle2 size={11} className="text-success" />
+                <span className="font-medium">{selectedTemplate.displayName}</span>
+              </div>
+              <div className="text-text-secondary mb-2">{selectedTemplate.description}</div>
+              <div className="text-text-secondary">
+                Upstream content automatically fills {'{{1}}'}.
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      <p className="text-[11px] text-text-tertiary">
+        Tip: Templates work outside Twilio's 24-hour window. Sandbox freeform only works within 24h of the recipient last messaging your Twilio number.
+      </p>
+    </>
   );
 }

@@ -42,6 +42,11 @@ const api = {
     accept: () => ipcRenderer.invoke('acceptance:accept'),
     getPath: () => ipcRenderer.invoke('acceptance:getPath'),
   },
+  whatsapp: {
+    listTemplates: () => ipcRenderer.invoke('whatsapp:listTemplates'),
+    provisionTemplates: () => ipcRenderer.invoke('whatsapp:provisionTemplates'),
+    refreshStatus: () => ipcRenderer.invoke('whatsapp:refreshStatus'),
+  },
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   },

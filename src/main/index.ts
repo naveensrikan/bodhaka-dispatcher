@@ -10,6 +10,7 @@ import { registerExecutionHandlers } from './ipc/execution';
 import { registerDialogHandlers } from './ipc/dialog';
 import { registerTemplateHandlers } from './ipc/templates';
 import { registerAcceptanceHandlers } from './ipc/acceptance';
+import { registerWhatsAppHandlers } from './ipc/whatsapp';
 import { startScheduler } from './services/scheduler';
 
 const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_RENDERER_URL;
@@ -90,6 +91,7 @@ app.whenReady().then(async () => {
     registerDialogHandlers();
     registerTemplateHandlers();
     registerAcceptanceHandlers();
+    registerWhatsAppHandlers();
 
     // Expose shell.openExternal for renderer
     ipcMain.handle('shell:openExternal', (_e, url: string) => {
