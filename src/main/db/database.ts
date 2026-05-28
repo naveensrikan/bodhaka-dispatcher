@@ -88,8 +88,12 @@ export async function initDatabase() {
 
   // Seed defaults
   const seedDefaults: Record<string, unknown> = {
-    profile: { name: '', grade: '', interests: [] },
-    contact: { email: '', whatsapp: '' },
+    profile: { name: '', grade: '', interests: [], ownershipConfirmed: false },
+    contact: {
+      email: '', whatsapp: '',
+      emailVerified: false, emailLocked: false,
+      phoneChangeCount: 0, phoneLocked: false,
+    },
     llm: { provider: 'anthropic', apiKey: '', model: 'claude-sonnet-4-6', ollamaUrl: 'http://localhost:11434' },
     smtp: { host: '', port: 587, user: '', pass: '', from: '' },
     twilio: { accountSid: '', authToken: '', from: '' },

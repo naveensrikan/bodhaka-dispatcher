@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Key, Mail, Send, Check, Loader2, Eye, EyeOff,
-  MessageCircle, Search as SearchIcon, Award, Coins,
+  MessageCircle, Search as SearchIcon, Award, Coins, AlertTriangle,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { InfoTooltip } from '../components/InfoTooltip';
 import { ExtLink } from '../components/ExtLink';
 import { SETUP_STEPS } from '../lib/setupSteps';
+import { CURRENCIES } from '../lib/currencies';
 import type { ConfigShape } from '../types/api';
 
 const PROVIDER_INFO = {
@@ -101,6 +102,10 @@ export function Configuration() {
 
   async function save() {
     if (!config) return;
+    if ((config.contact.email || config.contact.whatsapp) && !config.profile.ownershipConfirmed) {
+      toast.show('Please tick the box confirming these contact details are your own and for personal use.', 'error');
+      return;
+    }
     setSaving(true);
     const interests = interestsText.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
     const toSave = { ...config, profile: { ...config.profile, interests }, ui: { ...config.ui, onboardingDone: true } };
@@ -224,13 +229,60 @@ export function Configuration() {
         )}
       </Section>
 
-      <Section icon={<Mail size={15} />} title="Contact">
-        <Field label="Email" hint="Default destination for email-sending agents.">
-          <input className="input w-full" type="email" value={config.contact.email} onChange={(e) => update('contact', { email: e.target.value })} placeholder="you@example.com" />
-        </Field>
-        <Field label="WhatsApp Number" hint="Include country code (e.g. +91 for India).">
-          <input className="input w-full" value={config.contact.whatsapp} onChange={(e) => update('contact', { whatsapp: e.target.value })} placeholder="+91 98765 43210" />
-        </Field>
+      <Section icon={<Mail size={15} />} title="Your Contact Details (personal use only)">
+        <div className="p-3 mb-1 rounded-win bg-warning/10 border border-warning/30 text-[12px] text-text-secondary dark:text-text-secondary-dark">
+          These are the <strong>only</strong> addresses your agents can send to. This keeps Bodhaka Forge a personal-use tool and prevents misuse for bulk messaging.
+        </div>
+
+        <ContactVerification config={config} setConfig={setConfig} toast={toast} />
+
+        <label className="flex items-start gap-2.5 cursor-pointer pt-2">
+          <input
+            type="checkbox"
+            checked={config.profile.ownershipConfirmed || false}
+            onChange={(e) => update('profile', { ownershipConfirmed: e.target.checked })}
+            className="mt-0.5"
+          />
+          <span className="text-[12px] text-text-primary dark:text-text-primary-dark leading-relaxed">
+            I confirm that the email address and phone number above are <strong>my own</strong>, and that I will use Bodhaka Forge
+            and any agents I build <strong>solely for my personal learning</strong> — not for sending bulk or unsolicited messages to others.
+          </span>
+        </label>
+      </Section>
+
+      <Section icon={<Coins size={15} />} title="Currency (for cost display)">
+        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
+          Model prices are in USD. Choose your local currency and the conversion rate to see costs in your money on the Dashboard.
+        </p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Currency">
+            <select
+              className="input w-full"
+              value={config.currency?.code || 'USD'}
+              onChange={(e) => {
+                const cur = CURRENCIES.find((c) => c.code === e.target.value);
+                if (cur) update('currency', { code: cur.code, symbol: cur.symbol } as any);
+              }}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.code} — {c.name} ({c.symbol})</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Rate: units per $1 USD">
+            <input
+              type="number" step="0.01" className="input w-full"
+              value={config.currency?.rateFromUsd ?? 1}
+              onChange={(e) => update('currency', { rateFromUsd: parseFloat(e.target.value) || 1 } as any)}
+              placeholder="83"
+            />
+          </Field>
+        </div>
+        <p className="hint">
+          Symbol auto-fills: <strong>{config.currency?.symbol || '$'}</strong>. Check today's rate at{' '}
+          <ExtLink href="https://www.google.com/search?q=usd+to+inr" showIcon>Google</ExtLink> or{' '}
+          <ExtLink href="https://www.xe.com/currencyconverter/" showIcon>xe.com</ExtLink>, then enter how many units equal $1 (e.g. 83 for INR).
+        </p>
       </Section>
 
       <Section
@@ -309,50 +361,177 @@ export function Configuration() {
         </Field>
       </Section>
 
-      <Section icon={<Coins size={15} />} title="Currency (for cost display)">
-        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
-          Model prices are in USD. Set your local currency and the conversion rate to see costs in your money on the Dashboard.
-        </p>
-        <div className="grid grid-cols-3 gap-3">
-          <Field label="Currency code">
-            <input
-              className="input w-full"
-              value={config.currency?.code || 'USD'}
-              onChange={(e) => update('currency', { code: e.target.value.toUpperCase().slice(0, 3) } as any)}
-              placeholder="INR"
-            />
-          </Field>
-          <Field label="Symbol">
-            <input
-              className="input w-full"
-              value={config.currency?.symbol || '$'}
-              onChange={(e) => update('currency', { symbol: e.target.value.slice(0, 3) } as any)}
-              placeholder="₹"
-            />
-          </Field>
-          <Field label="Rate per $1 USD">
-            <input
-              type="number" step="0.01" className="input w-full"
-              value={config.currency?.rateFromUsd ?? 1}
-              onChange={(e) => update('currency', { rateFromUsd: parseFloat(e.target.value) || 1 } as any)}
-              placeholder="83"
-            />
-          </Field>
-        </div>
-        <p className="hint">
-          Check today's rate at{' '}
-          <ExtLink href="https://www.google.com/search?q=usd+to+inr" showIcon>Google currency converter</ExtLink>
-          {' '}or{' '}
-          <ExtLink href="https://www.xe.com/currencyconverter/" showIcon>xe.com</ExtLink>, then type how many units of your currency equal $1 (e.g. 83 for INR).
-        </p>
-      </Section>
-
       <div className="sticky bottom-0 -mx-8 px-8 py-3 bg-bg-base/95 dark:bg-bg-dark/95 backdrop-blur border-t border-border dark:border-border-dark flex justify-end gap-2">
         <button onClick={() => navigate('/dashboard')} className="btn-secondary">Cancel</button>
         <button onClick={save} disabled={saving} className="btn-primary">
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
           Save Changes
         </button>
+      </div>
+    </div>
+  );
+}
+
+function ContactVerification({
+  config, setConfig, toast,
+}: {
+  config: ConfigShape;
+  setConfig: React.Dispatch<React.SetStateAction<ConfigShape | null>>;
+  toast: ReturnType<typeof useToast>;
+}) {
+  const [emailDraft, setEmailDraft] = useState(config.contact.email || '');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState('');
+  const [sending, setSending] = useState(false);
+  const [verifying, setVerifying] = useState(false);
+  const [phoneDraft, setPhoneDraft] = useState(config.contact.whatsapp || '');
+
+  const emailLocked = config.contact.emailLocked && config.contact.emailVerified;
+  const phoneCount = config.contact.phoneChangeCount || 0;
+  const phoneLocked = config.contact.phoneLocked || phoneCount >= 3;
+  const phoneChangesLeft = Math.max(0, 3 - phoneCount);
+
+  function patchContact(patch: Record<string, any>) {
+    setConfig((prev) => prev ? { ...prev, contact: { ...prev.contact, ...patch } } : prev);
+  }
+
+  async function sendOtp() {
+    if (!config.smtp?.host) {
+      toast.show('Set up and test your SMTP (email sending) first — the code is sent via your own email.', 'error');
+      return;
+    }
+    setSending(true);
+    // Persist current SMTP so the OTP service can use it
+    await window.api.config.update({ smtp: config.smtp });
+    const res = await window.api.config.sendEmailOtp(emailDraft);
+    setSending(false);
+    if (res.ok) {
+      setOtpSent(true);
+      toast.show('Verification code sent to your email', 'success');
+    } else {
+      toast.show(res.error || 'Failed to send code', 'error');
+    }
+  }
+
+  async function verifyOtp() {
+    setVerifying(true);
+    const res = await window.api.config.verifyEmailOtp(emailDraft, otpCode);
+    setVerifying(false);
+    if (res.ok) {
+      patchContact({ email: emailDraft, emailVerified: true, emailLocked: true });
+      setOtpSent(false);
+      setOtpCode('');
+      toast.show('Email verified and locked', 'success');
+    } else {
+      toast.show(res.error || 'Verification failed', 'error');
+    }
+  }
+
+  async function changeEmail() {
+    await window.api.config.unlockEmail();
+    patchContact({ emailVerified: false, emailLocked: false });
+    setOtpSent(false);
+    toast.show('Email unlocked. Verify the new address to lock it again.', 'info');
+  }
+
+  function savePhone() {
+    if (phoneLocked) return;
+    const newCount = phoneCount + 1;
+    const willLock = newCount >= 3;
+    patchContact({ whatsapp: phoneDraft, phoneChangeCount: newCount, phoneLocked: willLock });
+    // Persist immediately so the counter survives
+    window.api.config.update({
+      contact: { ...config.contact, whatsapp: phoneDraft, phoneChangeCount: newCount, phoneLocked: willLock },
+    });
+    if (willLock) {
+      toast.show('Phone number is now permanently locked.', 'info');
+    } else {
+      toast.show(`Phone saved. ${3 - newCount} change(s) remaining.`, 'success');
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* EMAIL */}
+      <div>
+        <label className="label">Email address</label>
+        {emailLocked ? (
+          <div className="flex items-center gap-2">
+            <div className="input w-full flex items-center justify-between bg-bg-hover dark:bg-bg-dark-subtle">
+              <span>{config.contact.email}</span>
+              <VerifiedBadge text="Verified" />
+            </div>
+            <button onClick={changeEmail} className="btn-secondary whitespace-nowrap">Change</button>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                className="input flex-1" type="email" value={emailDraft}
+                onChange={(e) => setEmailDraft(e.target.value)}
+                placeholder="you@example.com"
+                disabled={otpSent}
+              />
+              {!otpSent ? (
+                <button onClick={sendOtp} disabled={sending || !emailDraft} className="btn-primary whitespace-nowrap">
+                  {sending ? <Loader2 size={14} className="animate-spin" /> : 'Send code'}
+                </button>
+              ) : (
+                <button onClick={() => { setOtpSent(false); setOtpCode(''); }} className="btn-secondary">Cancel</button>
+              )}
+            </div>
+            {otpSent && (
+              <div className="flex gap-2">
+                <input
+                  className="input flex-1 font-mono tracking-widest" value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter 6-digit code"
+                  maxLength={6}
+                />
+                <button onClick={verifyOtp} disabled={verifying || otpCode.length !== 6} className="btn-primary whitespace-nowrap">
+                  {verifying ? <Loader2 size={14} className="animate-spin" /> : 'Verify'}
+                </button>
+              </div>
+            )}
+            <p className="hint">
+              We email a 6-digit code to confirm this address is yours. The code is sent via your own SMTP, so set up Email Sending below first.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* PHONE */}
+      <div>
+        <label className="label">WhatsApp number</label>
+        {phoneLocked ? (
+          <div className="input w-full flex items-center justify-between bg-bg-hover dark:bg-bg-dark-subtle">
+            <span>{config.contact.whatsapp || '(not set)'}</span>
+            <span className="inline-flex items-center gap-1 text-[12px] text-text-tertiary">
+              <Check size={12} /> Locked
+            </span>
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <input
+                className="input flex-1" value={phoneDraft}
+                onChange={(e) => setPhoneDraft(e.target.value)}
+                placeholder="+91 98765 43210"
+              />
+              <button onClick={savePhone} disabled={!phoneDraft || phoneDraft === config.contact.whatsapp} className="btn-secondary whitespace-nowrap">
+                Save number
+              </button>
+            </div>
+            {phoneCount >= 1 && phoneChangesLeft <= 2 && (
+              <div className="p-2.5 rounded-win bg-warning/10 border border-warning/30 text-[11px] text-text-secondary dark:text-text-secondary-dark">
+                <AlertTriangle size={12} className="inline mr-1 text-warning" />
+                This is a personal-use-only app, so frequent phone number changes aren't allowed. You have{' '}
+                <strong>{phoneChangesLeft} change{phoneChangesLeft !== 1 ? 's' : ''} remaining</strong>, after which the last number you enter becomes permanently fixed and cannot be edited.
+              </div>
+            )}
+            <p className="hint">Include country code. Used as the only WhatsApp recipient for your agents.</p>
+          </div>
+        )}
       </div>
     </div>
   );

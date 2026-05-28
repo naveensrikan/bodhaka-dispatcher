@@ -1,5 +1,6 @@
 import { ipcMain } from 'electron';
 import { getDb } from '../db/database';
+import { sendEmailOtp, verifyEmailOtp, unlockEmail } from '../services/otp';
 
 export function registerConfigHandlers() {
   ipcMain.handle('config:get', () => {
@@ -31,4 +32,9 @@ export function registerConfigHandlers() {
     tx(updates);
     return { success: true };
   });
+
+  // Email OTP
+  ipcMain.handle('otp:sendEmail', async (_e, email: string) => await sendEmailOtp(email));
+  ipcMain.handle('otp:verifyEmail', (_e, email: string, code: string) => verifyEmailOtp(email, code));
+  ipcMain.handle('otp:unlockEmail', () => { unlockEmail(); return { ok: true }; });
 }

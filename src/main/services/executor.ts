@@ -258,9 +258,12 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'sendEmail': {
-      const to = node.data.to;
+      const db = getDb();
+      const contactRow = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
+      const contact = contactRow ? JSON.parse(contactRow.value) : {};
+      const to = contact.email;  // always the user's verified email
       const subject = node.data.subject || 'From your Bodhaka Forge agent';
-      if (!to) throw new Error('Email recipient is empty');
+      if (!to) throw new Error('No verified email in Settings. Add and verify your email first.');
       const { renderEmailHtml } = require('./emailRender');
       const html = await renderEmailHtml(inputText, subject);
       const result = await withRetry(() => sendEmail(to, subject, html, true), 2, ctx, 'email send');
@@ -269,23 +272,22 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'sendWhatsApp': {
-      const to = node.data.to;
-      if (!to) throw new Error('WhatsApp recipient is empty');
+      const db = getDb();
+      const contactRow = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
+      const contact = contactRow ? JSON.parse(contactRow.value) : {};
+      const to = contact.whatsapp;  // always the user's own number
+      if (!to) throw new Error('No WhatsApp number in Settings. Add your number first.');
       const templateName = node.data.templateName;
 
       if (templateName) {
-        // Production: use approved Content Template
-        // Build variables — by convention, {{1}} is the main body unless the
-        // node has explicit variable mapping in node.data.variables
         const variables = node.data.variables && Object.keys(node.data.variables).length > 0
           ? node.data.variables as Record<string, string>
-          : { '1': inputText };  // simple case: dump upstream into var 1
+          : { '1': inputText };
         const result = await sendTemplatedWhatsApp(templateName, to, variables);
         if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
         log(ctx, `  WhatsApp template "${templateName}" sent to ${to}`);
         return result;
       } else {
-        // Sandbox / freeform mode (legacy, for users in Twilio sandbox)
         const result = await sendWhatsApp(to, inputText);
         if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
         log(ctx, `  WhatsApp (freeform) sent to ${to}`);

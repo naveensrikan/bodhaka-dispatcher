@@ -1,6 +1,10 @@
 export interface ConfigShape {
-  profile: { name: string; grade: string; interests: string[] };
-  contact: { email: string; whatsapp: string };
+  profile: { name: string; grade: string; interests: string[]; ownershipConfirmed?: boolean };
+  contact: {
+    email: string; whatsapp: string;
+    emailVerified?: boolean; emailLocked?: boolean;
+    phoneChangeCount?: number; phoneLocked?: boolean;
+  };
   llm: { provider: 'openai' | 'anthropic' | 'gemini' | 'ollama'; apiKey: string; model: string; ollamaUrl?: string };
   smtp: { host: string; port: number; user: string; pass: string; from: string };
   twilio: { accountSid: string; authToken: string; from: string };
@@ -90,6 +94,9 @@ declare global {
       config: {
         get: () => Promise<ConfigShape>;
         update: (updates: Partial<ConfigShape>) => Promise<{ success: boolean }>;
+        sendEmailOtp: (email: string) => Promise<{ ok: boolean; error?: string }>;
+        verifyEmailOtp: (email: string, code: string) => Promise<{ ok: boolean; error?: string }>;
+        unlockEmail: () => Promise<{ ok: boolean }>;
       };
       agents: {
         list: () => Promise<Agent[]>;

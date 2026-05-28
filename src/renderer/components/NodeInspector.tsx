@@ -244,17 +244,19 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
         {node.type === 'sendEmail' && (
           <>
             <div>
-              <label className="label">To</label>
-              <input className="input w-full" value={data.to || ''} onChange={(e) => update({ to: e.target.value })} placeholder={defaultEmail || 'you@example.com'} />
-              {defaultEmail && data.to !== defaultEmail && (
-                <button type="button" onClick={() => update({ to: defaultEmail })} className="mt-1 text-[11px] text-accent hover:underline">
-                  Use my email ({defaultEmail})
-                </button>
-              )}
+              <label className="label">To (your verified email)</label>
+              <div className="input w-full bg-bg-hover dark:bg-bg-dark-subtle text-text-secondary flex items-center justify-between">
+                <span>{defaultEmail || '(set your email in Settings)'}</span>
+                {defaultEmail && <Check size={13} className="text-success" />}
+              </div>
+              <p className="hint">
+                Agents can only send to your own verified email. To change it, update and re-verify in Settings. This keeps Bodhaka Forge personal-use only.
+              </p>
             </div>
             <div>
               <label className="label">Subject</label>
               <input className="input w-full" value={data.subject || ''} onChange={(e) => update({ subject: e.target.value })} placeholder="Your daily summary" />
+              <p className="hint">The subject line of the email you'll receive.</p>
             </div>
           </>
         )}
@@ -303,22 +305,14 @@ function WhatsAppNodeFields({
   return (
     <>
       <div>
-        <label className="label">To (phone number with country code)</label>
-        <input
-          className="input w-full"
-          value={data.to || ''}
-          onChange={(e) => update({ to: e.target.value })}
-          placeholder={defaultWhatsApp || '+91 98765 43210'}
-        />
-        {defaultWhatsApp && data.to !== defaultWhatsApp && (
-          <button
-            type="button"
-            onClick={() => update({ to: defaultWhatsApp })}
-            className="mt-1 text-[11px] text-brand hover:underline"
-          >
-            Use my number ({defaultWhatsApp})
-          </button>
-        )}
+        <label className="label">To (your WhatsApp number)</label>
+        <div className="input w-full bg-bg-hover dark:bg-bg-dark-subtle text-text-secondary flex items-center justify-between">
+          <span>{defaultWhatsApp || '(set your number in Settings)'}</span>
+          {defaultWhatsApp && <CheckCircle2 size={13} className="text-success" />}
+        </div>
+        <p className="hint">
+          Agents can only message your own number, set in Settings. This keeps the app personal-use only.
+        </p>
       </div>
 
       {!twilioConfigured && (
