@@ -164,6 +164,49 @@ export function getTemplateStates(): TemplateState[] {
 }
 
 /**
+/**
+ * Fetch ALL existing Content templates from the Twilio account (paginated).
+ * Returns a map of friendly_name -> { sid, body, language, variables }.
+ * Used to avoid creating duplicates and to import templates created earlier.
+ */
+async function fetchTwilioContents(cfg: { accountSid: string; authToken: string }): Promise<
+  Array<{ sid: string; friendlyName: string; language: string; body: string; variables: Record<string, string>; contentType: string }>
+> {
+  const auth = basicAuth(cfg.accountSid, cfg.authToken);
+  const out: Array<{ sid: string; friendlyName: string; language: string; body: string; variables: Record<string, string>; contentType: string }> = [];
+  let url: string | null = 'https://content.twilio.com/v1/Content?PageSize=50';
+
+  // Follow pagination via meta.next_page_url
+  let guard = 0;
+  while (url && guard < 20) {
+    guard++;
+    const res: Response = await fetch(url, { headers: { Authorization: auth } });
+    if (!res.ok) {
+      const err: any = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Failed to list templates: HTTP ${res.status}`);
+    }
+    const data: any = await res.json();
+    const contents: any[] = data.contents || [];
+    for (const c of contents) {
+      // types is an object keyed by content type (e.g. "twilio/text")
+      const typeKeys = c.types ? Object.keys(c.types) : [];
+      const contentType = typeKeys[0] || 'twilio/text';
+      const body = (c.types && c.types[contentType] && c.types[contentType].body) || '';
+      out.push({
+        sid: c.sid,
+        friendlyName: c.friendly_name || '',
+        language: c.language || 'en',
+        body,
+        variables: c.variables || {},
+        contentType,
+      });
+    }
+    url = data.meta && data.meta.next_page_url ? data.meta.next_page_url : null;
+  }
+  return out;
+}
+
+/**
  * Create a single template on the student's Twilio account via Content API,
  * then submit it for WhatsApp approval.
  */
@@ -172,6 +215,30 @@ async function provisionOne(spec: WhatsAppTemplateSpec, cfg: { accountSid: strin
   approvalStatus: string;
 }> {
   const auth = basicAuth(cfg.accountSid, cfg.authToken);
+
+  // Guard against duplicates: if a Content template with the same friendly_name
+  // already exists on this Twilio account, reuse it instead of creating another.
+  try {
+    const existing = await fetchTwilioContents(cfg);
+    const match = existing.find((c) => c.friendlyName === spec.name);
+    if (match) {
+      // Already exists on Twilio — reuse its SID. Check approval status.
+      let approvalStatus = 'received';
+      try {
+        const apRes = await fetch(`https://content.twilio.com/v1/Content/${match.sid}/ApprovalRequests`, {
+          headers: { Authorization: auth },
+        });
+        if (apRes.ok) {
+          const ap: any = await apRes.json();
+          approvalStatus = ap?.whatsapp?.status || ap?.status || 'received';
+        }
+      } catch { /* ignore, keep default */ }
+      return { contentSid: match.sid, approvalStatus };
+    }
+  } catch (e) {
+    // If the lookup fails (network etc.), fall through to normal creation.
+    console.error('Duplicate-check lookup failed, proceeding to create:', e);
+  }
 
   // Step 1: Create the Content Template
   const createBody = {
@@ -372,4 +439,111 @@ export async function sendTemplatedWhatsApp(
   } catch (err: any) {
     return { sent: false, error: err.message };
   }
+}
+
+/**
+ * Sync existing templates FROM the connected Twilio account into the app.
+ *
+ * Solves the duplicate problem: if you have provisioned templates on this
+ * Twilio account before (in a previous install or session), this pulls them in
+ * so the app knows they already exist and will not re-create them.
+ *
+ * For each Content template found on Twilio:
+ *  - If its friendly_name matches a built-in Bodhaka template -> record its
+ *    content_sid + approval status against that built-in (marks it provisioned).
+ *  - If it matches an existing custom template -> same, updates its state.
+ *  - If it matches nothing the app knows -> import it as a NEW custom template
+ *    and record its state, so you can see and reuse it.
+ *
+ * Returns a summary so the UI can tell the user what happened.
+ */
+export async function syncFromTwilio(): Promise<{
+  matchedBuiltin: number;
+  matchedCustom: number;
+  importedCustom: number;
+  total: number;
+  importedNames: string[];
+}> {
+  const cfg = loadTwilio();
+  const db = getDb();
+  initTemplateTable();
+  initCustomTemplateTable();
+
+  const existing = await fetchTwilioContents(cfg);
+
+  const builtinNames = new Set(WHATSAPP_TEMPLATES.map((t) => t.name));
+  const customNames = new Set(listCustomTemplates().map((t) => t.name));
+
+  let matchedBuiltin = 0;
+  let matchedCustom = 0;
+  let importedCustom = 0;
+  const importedNames: string[] = [];
+
+  const auth = basicAuth(cfg.accountSid, cfg.authToken);
+
+  for (const c of existing) {
+    const name = c.friendlyName;
+    if (!name) continue;
+
+    // Determine approval status for this content (best effort)
+    let approvalStatus = 'received';
+    try {
+      const apRes = await fetch(`https://content.twilio.com/v1/Content/${c.sid}/ApprovalRequests`, {
+        headers: { Authorization: auth },
+      });
+      if (apRes.ok) {
+        const ap: any = await apRes.json();
+        approvalStatus = ap?.whatsapp?.status || ap?.status || 'received';
+      }
+    } catch { /* keep default */ }
+
+    const isBuiltin = builtinNames.has(name);
+    const isCustom = customNames.has(name);
+
+    // If unknown to the app, import it as a custom template so it is reusable
+    if (!isBuiltin && !isCustom) {
+      // Rebuild variableSamples/labels from Twilio's variables map
+      const variableSamples: Record<string, string> = c.variables || {};
+      const variableLabels = Object.keys(variableSamples).map((k) => `Variable ${k}`);
+      const spec: WhatsAppTemplateSpec = {
+        name,
+        displayName: name.replace(/_/g, ' '),
+        description: 'Imported from your Twilio account',
+        category: 'UTILITY',
+        contentType: c.contentType || 'twilio/text',
+        language: c.language || 'en',
+        body: c.body || '',
+        variableSamples,
+        variableLabels,
+        builtin: false,
+      } as WhatsAppTemplateSpec;
+      // Store directly (skip validation, since it already exists on Twilio)
+      db.prepare('INSERT OR REPLACE INTO wa_custom_templates (name, spec, created_at) VALUES (?, ?, ?)')
+        .run(name, JSON.stringify(spec), Date.now());
+      importedCustom++;
+      importedNames.push(name);
+    } else if (isBuiltin) {
+      matchedBuiltin++;
+    } else {
+      matchedCustom++;
+    }
+
+    // Record the per-account state so the app treats it as provisioned
+    db.prepare(`
+      INSERT INTO wa_templates (account_sid, template_name, content_sid, approval_status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(account_sid, template_name) DO UPDATE SET
+        content_sid = excluded.content_sid,
+        approval_status = excluded.approval_status,
+        updated_at = excluded.updated_at
+    `).run(cfg.accountSid, name, c.sid, approvalStatus, Date.now(), Date.now());
+  }
+
+  return {
+    matchedBuiltin,
+    matchedCustom,
+    importedCustom,
+    total: existing.length,
+    importedNames,
+  };
 }

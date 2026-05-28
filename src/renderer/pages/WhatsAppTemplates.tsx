@@ -14,6 +14,7 @@ export function WhatsAppTemplates() {
   const [provisioning, setProvisioning] = useState(false);
   const [provisioningOne, setProvisioningOne] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [twilioConfigured, setTwilioConfigured] = useState(true);
   const [twilioVerified, setTwilioVerified] = useState(false);
   const [showCustomForm, setShowCustomForm] = useState(false);
@@ -72,6 +73,24 @@ export function WhatsAppTemplates() {
       setTemplates(result);
       toast.show('Status refreshed', 'success');
     }
+  }
+
+  async function syncFromTwilio() {
+    setSyncing(true);
+    toast.show('Checking your Twilio account for existing templates...', 'info');
+    const result: any = await window.api.whatsapp.syncFromTwilio();
+    setSyncing(false);
+    if (result?.error) {
+      toast.show(`Sync failed: ${result.error}`, 'error');
+      return;
+    }
+    const imported = result.importedCustom || 0;
+    const matched = (result.matchedBuiltin || 0) + (result.matchedCustom || 0);
+    toast.show(
+      `Synced ${result.total} template(s) from Twilio: ${matched} matched, ${imported} imported as custom. No duplicates created.`,
+      'success'
+    );
+    refresh();
   }
 
   async function provisionOne(name: string, displayName: string) {
@@ -194,6 +213,10 @@ export function WhatsAppTemplates() {
           )}
           <button onClick={() => setShowCustomForm((s) => !s)} className="btn-secondary">
             <Plus size={14} /> Create custom template
+          </button>
+          <button onClick={syncFromTwilio} disabled={syncing} className="btn-secondary" title="Pull in templates that already exist on your Twilio account, so duplicates are not created">
+            {syncing ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+            Sync from Twilio
           </button>
         </div>
       )}

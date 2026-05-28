@@ -54,6 +54,7 @@ const api = {
     saveCustom: (spec: unknown) => ipcRenderer.invoke('whatsapp:saveCustom', spec),
     listCustom: () => ipcRenderer.invoke('whatsapp:listCustom'),
     deleteCustom: (name: string) => ipcRenderer.invoke('whatsapp:deleteCustom', name),
+    syncFromTwilio: () => ipcRenderer.invoke('whatsapp:syncFromTwilio'),
   },
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),

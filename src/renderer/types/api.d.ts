@@ -149,6 +149,7 @@ declare global {
         saveCustom: (spec: any) => Promise<{ ok: boolean; error?: string }>;
         listCustom: () => Promise<any[]>;
         deleteCustom: (name: string) => Promise<{ ok: boolean; error?: string }>;
+        syncFromTwilio: () => Promise<{ matchedBuiltin: number; matchedCustom: number; importedCustom: number; total: number; importedNames: string[]; error?: string }>;
       };
       shell: {
         openExternal: (url: string) => Promise<void>;

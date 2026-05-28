@@ -8,6 +8,7 @@ import {
   saveCustomTemplate,
   listCustomTemplates,
   deleteCustomTemplate,
+  syncFromTwilio,
 } from '../services/whatsappProvisioning';
 
 export function registerWhatsAppHandlers() {
@@ -46,5 +47,10 @@ export function registerWhatsAppHandlers() {
   ipcMain.handle('whatsapp:deleteCustom', (_e, name: string) => {
     try { deleteCustomTemplate(name); return { ok: true }; }
     catch (err: any) { return { ok: false, error: err.message }; }
+  });
+
+  ipcMain.handle('whatsapp:syncFromTwilio', async () => {
+    try { return await syncFromTwilio(); }
+    catch (err: any) { return { error: err.message }; }
   });
 }
