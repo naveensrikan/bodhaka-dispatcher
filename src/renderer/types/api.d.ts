@@ -152,6 +152,7 @@ declare global {
       };
       shell: {
         openExternal: (url: string) => Promise<void>;
+        forceQuit: () => Promise<void>;
       };
       catchup: {
         find: () => Promise<any[]>;

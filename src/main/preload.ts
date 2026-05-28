@@ -57,6 +57,7 @@ const api = {
   },
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
+    forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
   },
   catchup: {
     find: () => ipcRenderer.invoke('catchup:find'),

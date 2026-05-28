@@ -90,29 +90,26 @@ function createWindow() {
     if (!launchedHidden) mainWindow?.show();
   });
 
-  // Window close behaviour:
-  //  - If minimize-to-tray is on and this isn't an explicit Quit, just hide.
-  //  - Otherwise it's a real quit via the window X: confirm first.
+  // Window close behaviour: clicking X asks for confirmation, then hides to tray.
   mainWindow.on('close', (e) => {
-    const prefs = getSchedulingPrefs();
-
-    // Already confirmed (e.g. via tray Quit) — allow close
+    // A real quit (tray Quit) was already confirmed — let it close.
     if (quitConfirmed) return;
 
-    // Just hiding to tray — no confirmation needed
-    if (prefs.minimizeToTray) {
-      e.preventDefault();
-      mainWindow?.hide();
-      return;
-    }
-
-    // Real quit via the window X — confirm first
+    // Always show the confirmation on the X.
     e.preventDefault();
-    if (confirmQuit()) {
-      quitConfirmed = true;
-      isQuitting = true;
-      app.quit();
+    const choice = dialog.showMessageBoxSync(mainWindow!, {
+      type: 'question',
+      buttons: ['Cancel', 'Minimize to tray'],
+      defaultId: 1,
+      cancelId: 0,
+      title: 'Close Bodhaka Forge?',
+      message: 'Are you sure you want to close the window?',
+      detail: 'Bodhaka Forge will keep running quietly in the system tray so your scheduled agents still run. You can reopen it from the tray icon, or fully quit from there.',
+    });
+    if (choice === 1) {
+      mainWindow?.hide();
     }
+    // If Cancel, nothing happens and the window stays open.
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });
@@ -240,6 +237,13 @@ if (!gotLock) {
         return await executeAgent(agentId);
       });
 
+      // Real quit, bypassing the tray confirmation (used by "I do not agree, Exit")
+      ipcMain.handle('app:forceQuit', () => {
+        quitConfirmed = true;
+        isQuitting = true;
+        app.quit();
+      });
+
       applyLaunchOnStartup();
       startScheduler();
 
@@ -265,7 +269,7 @@ if (!gotLock) {
 app.on('before-quit', () => { isQuitting = true; });
 
 app.on('window-all-closed', () => {
-  // Don't quit on window close — we live in the tray. Only quit explicitly.
-  const prefs = getSchedulingPrefs();
-  if (!prefs.minimizeToTray && process.platform !== 'darwin') app.quit();
+  // We live in the tray — closing the window hides it, it does not quit.
+  // Only an explicit Quit (from the tray menu) exits the app.
+  // On macOS apps also stay alive when all windows close.
 });

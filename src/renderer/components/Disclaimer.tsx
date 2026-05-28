@@ -223,7 +223,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           </label>
           <div className="flex gap-2">
             <button
-              onClick={() => window.close()}
+              onClick={() => window.api.shell.forceQuit()}
               className="btn-secondary flex-1"
               disabled={accepting}
             >
