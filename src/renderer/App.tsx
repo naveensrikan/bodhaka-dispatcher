@@ -6,6 +6,7 @@ import {
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
 import { Disclaimer } from './components/Disclaimer';
+import { MissedRunsBanner } from './components/MissedRunsBanner';
 import { Logo } from './components/Logo';
 import { ExtLink } from './components/ExtLink';
 
@@ -93,7 +94,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v0.7.0</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v0.8.1</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"
@@ -114,6 +115,7 @@ export function App() {
           <span className="text-[13px] font-medium text-text-primary dark:text-text-primary-dark">{pageTitle}</span>
         </div>
         <div className="flex-1 overflow-auto">
+          <MissedRunsBanner />
           <Outlet />
         </div>
       </main>

@@ -57,6 +57,15 @@ const api = {
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),
   },
+  catchup: {
+    find: () => ipcRenderer.invoke('catchup:find'),
+    run: (agentId: string) => ipcRenderer.invoke('catchup:run', agentId),
+    onMissed: (callback: (data: unknown) => void) => {
+      const listener = (_: unknown, data: unknown) => callback(data);
+      ipcRenderer.on('catchup:missed', listener);
+      return () => ipcRenderer.removeListener('catchup:missed', listener);
+    },
+  },
   execution: {
     onRunUpdate: (callback: (data: unknown) => void) => {
       const listener = (_: unknown, data: unknown) => callback(data);

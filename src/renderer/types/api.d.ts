@@ -10,6 +10,12 @@ export interface ConfigShape {
   twilio: { accountSid: string; authToken: string; from: string };
   search: { tavilyKey: string; braveKey: string };
   ui: { theme: 'light' | 'dark'; onboardingDone: boolean };
+  scheduling?: {
+    launchOnStartup: boolean;
+    minimizeToTray: boolean;
+    catchUpMode: 'auto' | 'ask';
+    missedPolicy: 'recent' | 'all' | 'skip';
+  };
   verified?: {
     llm?: boolean;
     smtp?: boolean;
@@ -145,6 +151,11 @@ declare global {
       };
       shell: {
         openExternal: (url: string) => Promise<void>;
+      };
+      catchup: {
+        find: () => Promise<any[]>;
+        run: (agentId: string) => Promise<{ runId: string; status: string; error?: string }>;
+        onMissed: (callback: (data: any) => void) => () => void;
       };
       execution: {
         onRunUpdate: (callback: (data: any) => void) => () => void;

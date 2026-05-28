@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Key, Mail, Send, Check, Loader2, Eye, EyeOff,
-  MessageCircle, Search as SearchIcon, Award, Coins, AlertTriangle,
+  MessageCircle, Search as SearchIcon, Award, Coins, AlertTriangle, Clock,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { InfoTooltip } from '../components/InfoTooltip';
@@ -359,6 +359,68 @@ export function Configuration() {
         >
           <input type="password" className="input w-full" value={config.search.braveKey} onChange={(e) => update('search', { braveKey: e.target.value })} placeholder="BSA..." />
         </Field>
+      </Section>
+
+      <Section icon={<Clock size={15} />} title="Scheduling & Background Running">
+        <div className="p-3 mb-1 rounded-win bg-brand-subtle dark:bg-brand-subtle-dark border border-brand/20 text-[12px] text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+          <strong className="text-text-primary dark:text-text-primary-dark">How scheduling works:</strong> For scheduled agents to run, Bodhaka Forge must be running — either open, or minimized in the system tray. Turn on "Launch on startup" below so it's always ready whenever your PC is on. If it wasn't running at the scheduled time, it'll catch up when you next open it.
+        </div>
+        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
+          These settings help it stay running and catch up on anything missed while your PC was off.
+        </p>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={config.scheduling?.launchOnStartup || false}
+            onChange={(e) => update('scheduling', { launchOnStartup: e.target.checked } as any)}
+            className="mt-0.5"
+          />
+          <span className="text-[12px] leading-relaxed">
+            <strong>Launch on startup</strong> — open automatically (minimized to the system tray) when you turn on your PC, so scheduled agents are always armed.
+          </span>
+        </label>
+        <label className="flex items-start gap-2.5 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={config.scheduling?.minimizeToTray !== false}
+            onChange={(e) => update('scheduling', { minimizeToTray: e.target.checked } as any)}
+            className="mt-0.5"
+          />
+          <span className="text-[12px] leading-relaxed">
+            <strong>Keep running in the tray when I close the window</strong> — closing the window hides it to the tray instead of quitting. (Quit anytime from the tray icon.)
+          </span>
+        </label>
+
+        <Field label="When my PC turns on and agents were missed">
+          <select
+            className="input w-full"
+            value={config.scheduling?.catchUpMode || 'ask'}
+            onChange={(e) => update('scheduling', { catchUpMode: e.target.value } as any)}
+          >
+            <option value="ask">Ask me — show missed agents with Run / Dismiss options</option>
+            <option value="auto">Run them automatically</option>
+          </select>
+        </Field>
+
+        <Field label="How many missed runs to catch up">
+          <select
+            className="input w-full"
+            value={config.scheduling?.missedPolicy || 'recent'}
+            onChange={(e) => update('scheduling', { missedPolicy: e.target.value } as any)}
+          >
+            <option value="recent">Just once — only the most recent missed run (recommended)</option>
+            <option value="all">All missed runs (up to 5) — e.g. catch every missed quiz</option>
+            <option value="skip">Skip missed runs — only run on schedule going forward</option>
+          </select>
+          <p className="hint">
+            "Just once" means if your PC was off for 3 days, you get <strong>one</strong> fresh morning boost when you return — not three stale ones piled up.
+          </p>
+        </Field>
+
+        <div className="p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle text-[11px] text-text-secondary dark:text-text-secondary-dark">
+          <AlertTriangle size={12} className="inline mr-1 text-warning" />
+          Honest note: no app can run while your PC is fully <strong>off</strong>. Scheduled agents fire only when your PC is on. If your PC was off at the scheduled time, Bodhaka Forge catches up the next time you turn it on. For guaranteed on-time delivery even when your PC is off, a cloud version would be needed.
+        </div>
       </Section>
 
       <div className="sticky bottom-0 -mx-8 px-8 py-3 bg-bg-base/95 dark:bg-bg-dark/95 backdrop-blur border-t border-border dark:border-border-dark flex justify-end gap-2">

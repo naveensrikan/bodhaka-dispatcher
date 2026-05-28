@@ -99,6 +99,12 @@ export async function initDatabase() {
     twilio: { accountSid: '', authToken: '', from: '' },
     search: { tavilyKey: '', braveKey: '' },
     ui: { theme: 'light', onboardingDone: false },
+    scheduling: {
+      launchOnStartup: false,
+      minimizeToTray: true,
+      catchUpMode: 'ask',        // 'auto' | 'ask'
+      missedPolicy: 'recent',    // 'recent' | 'all' | 'skip'
+    },
     verified: { llm: false, smtp: false, twilio: false },
     currency: { code: 'USD', symbol: '$', rateFromUsd: 1 },
     pricing: {

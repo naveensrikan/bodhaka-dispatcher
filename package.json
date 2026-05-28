@@ -1,6 +1,6 @@
 {
   "name": "bodhaka-forge",
-  "version": "0.7.0",
+  "version": "0.8.1",
   "description": "Bodhaka Forge — Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
   "main": "dist/main/index.js",
   "author": "BuoyantWave Learning Technologies LLP",
@@ -23,6 +23,7 @@
     "@xyflow/react": "^12.3.5",
     "better-sqlite3": "^11.5.0",
     "clsx": "^2.1.1",
+    "cron-parser": "^4.9.0",
     "katex": "^0.16.11",
     "lucide-react": "^0.460.0",
     "mammoth": "^1.8.0",

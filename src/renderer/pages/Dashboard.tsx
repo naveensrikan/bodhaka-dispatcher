@@ -25,6 +25,9 @@ export function Dashboard() {
   const hasLocalCurrency = currency.code !== 'USD' && currency.rateFromUsd && currency.rateFromUsd !== 1;
   const [showLocal, setShowLocal] = useState(false);
 
+  const hasScheduledAgents = agents.some((a) => a.enabled && a.schedule);
+  const schedulingActive = !!config?.scheduling?.launchOnStartup && config?.scheduling?.minimizeToTray !== false;
+
   function fmtCost(usd: number): string {
     if (showLocal && hasLocalCurrency) {
       return `${currency.symbol}${(usd * currency.rateFromUsd).toFixed(2)}`;
@@ -50,6 +53,29 @@ export function Dashboard() {
           Your AI agents, ready when you are.
         </p>
       </header>
+
+      {hasScheduledAgents && (
+        schedulingActive ? (
+          <div className="card p-3 mb-6 border-success/30 flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-full bg-success/15 flex items-center justify-center shrink-0">
+              <CheckCircle2 size={14} className="text-success" />
+            </div>
+            <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark">
+              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling active.</strong> Bodhaka Forge launches on startup and runs in the tray, so your scheduled agents fire whenever your PC is on.
+            </div>
+          </div>
+        ) : (
+          <Link to="/configuration" className="card p-3 mb-6 border-warning/40 flex items-center gap-2.5 hover:border-warning transition-colors">
+            <div className="w-6 h-6 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+              <AlertCircle size={14} className="text-warning" />
+            </div>
+            <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark flex-1">
+              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling only works while the app is open.</strong> Your agents won't run on time if Bodhaka Forge is closed. Turn on "Launch on startup" in Settings so it's always ready when your PC is on.
+            </div>
+            <ChevronRight size={14} className="text-text-tertiary shrink-0" />
+          </Link>
+        )
+      )}
 
       <div className="grid grid-cols-4 gap-3 mb-8">
         <StatCard icon={<Bot size={16} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} enabled`} />
