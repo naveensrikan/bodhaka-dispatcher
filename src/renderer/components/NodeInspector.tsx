@@ -249,8 +249,22 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
         {node.type === 'rememberThis' && (
           <div>
             <label className="label">Memory key</label>
-            <input className="input w-full" value={data.key || 'last'} onChange={(e) => update({ key: e.target.value })} placeholder="e.g. last_session" />
-            <p className="hint">Give this saved note a short name (like "last") so the agent can find it again later. Read it back in a later block by typing <span className="font-mono">{`{{memory.${data.key || 'last'}}}`}</span>. This agent keeps only its 10 most recent memories, so older ones are removed automatically.</p>
+            <input
+              className="input w-full"
+              value={data.key || 'last'}
+              onChange={(e) => {
+                // Force a single word: lowercase, spaces -> underscores, only
+                // letters/numbers/underscore allowed. No spaces or symbols.
+                const clean = e.target.value
+                  .toLowerCase()
+                  .replace(/\s+/g, '_')
+                  .replace(/[^a-z0-9_]/g, '')
+                  .replace(/_+/g, '_');
+                update({ key: clean });
+              }}
+              placeholder="e.g. last_session"
+            />
+            <p className="hint">Use one word with underscores instead of spaces, for example <span className="font-mono">latest_news</span> (not "latest news of today"). Read it back later by typing <span className="font-mono">{`{{memory.${data.key || 'last'}}}`}</span>. This agent keeps only its 10 most recent memories, so older ones are removed automatically.</p>
 
             {memoryKeys.includes(data.key || 'last') && (
               <div className="mt-2 p-2.5 rounded-win bg-warning/10 border border-warning/30 text-[11px] text-text-secondary dark:text-text-secondary-dark">
@@ -311,7 +325,22 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
           <div>
             <label className="label">Filename</label>
             <input className="input w-full" value={data.filename || ''} onChange={(e) => update({ filename: e.target.value })} placeholder="output.txt" />
-            <p className="text-[11px] text-text-tertiary mt-1.5">Saved to Documents/Bodhaka Forge/.</p>
+            <p className="text-[11px] text-text-tertiary mt-1.5">
+              Saved to Documents/Bodhaka Forge/. Allowed file types: <b>.txt .md .csv .json .html .log</b> (other types are not allowed).
+            </p>
+            {(() => {
+              const fn = (data.filename || '').trim().toLowerCase();
+              const dot = fn.lastIndexOf('.');
+              const ext = dot > 0 ? fn.slice(dot + 1) : '';
+              if (ext && !['txt','md','csv','json','html','log'].includes(ext)) {
+                return (
+                  <p className="text-[11px] text-danger mt-1 flex items-center gap-1">
+                    <AlertTriangle size={11} /> ".{ext}" is not allowed. Use one of: txt, md, csv, json, html, log.
+                  </p>
+                );
+              }
+              return null;
+            })()}
           </div>
         )}
       </div>
@@ -505,6 +534,13 @@ function VariableMapper({
       <p className="hint mb-3">
         This template has <b>{varNums.length}</b> variable{varNums.length !== 1 ? 's' : ''}. Fill each one. Choose <b>one</b> to receive the agent's AI output; type a fixed value for the rest. All are required.
       </p>
+
+      <div className="p-2.5 rounded-win bg-warning/10 border border-warning/30 text-[11px] mb-3 flex items-start gap-2">
+        <AlertTriangle size={13} className="text-warning shrink-0 mt-0.5" />
+        <div>
+          <b>Please test your output first.</b> WhatsApp templates are strict. If the AI or web search produces text that is very long, has many line breaks, or unusual characters, WhatsApp may reject the message. Run the agent once and check the message arrives correctly before relying on it. Keep AI output short and simple for WhatsApp.
+        </div>
+      </div>
 
       <div className="space-y-3">
         {varNums.map((num, i) => {

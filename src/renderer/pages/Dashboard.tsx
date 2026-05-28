@@ -83,25 +83,29 @@ export function Dashboard() {
       )}
 
       <div className="grid grid-cols-4 gap-3 mb-8">
-        <StatCard icon={<Bot size={16} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} enabled`} />
+        <StatCard tint="mint" icon={<Bot size={16} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} enabled`} />
         <StatCard
+          tint="sky"
           icon={<Activity size={16} />} label="Provider"
           value={llmReady ? (config?.llm?.provider || ', ') : 'Not set'}
           sub={llmReady ? config?.llm?.model?.split('-').slice(0,3).join('-') : 'Setup needed'}
         />
         <StatCard
+          tint="lime"
           icon={<Zap size={16} />} label="Runs (7d)"
           value={String(stats?.last7Days?.runs || 0)}
           sub={`${recentRuns.filter((r) => r.status === 'success').length} successful`}
         />
         <StatCard
+          tint="peach"
           icon={<DollarSign size={16} />} label={`Cost (7d)`}
           value={fmtCost(stats?.last7Days?.cost || 0)}
           sub={`${fmtCost(stats?.totalCost || 0)} all time`}
           action={hasLocalCurrency ? (
             <button
               onClick={() => setShowLocal((s) => !s)}
-              className="text-[10px] text-brand hover:underline mt-1"
+              className="text-[10px] hover:underline mt-1"
+              style={{ color: '#1e2a8a' }}
             >
               Show in {showLocal ? 'USD' : currency.code}
             </button>
@@ -199,15 +203,25 @@ export function Dashboard() {
   );
 }
 
-function StatCard({ icon, label, value, sub, action }: { icon: React.ReactNode; label: string; value: string; sub: string; action?: React.ReactNode }) {
+function StatCard({ icon, label, value, sub, action, tint }: { icon: React.ReactNode; label: string; value: string; sub: string; action?: React.ReactNode; tint?: 'mint' | 'sky' | 'lime' | 'peach' }) {
+  const tints: Record<string, string> = {
+    mint: '#e6f7ee',
+    sky: '#e6f1fb',
+    lime: '#f0f7da',
+    peach: '#fdeede',
+  };
+  const bg = tint ? tints[tint] : '#ffffff';
   return (
-    <div className="card p-4">
-      <div className="flex items-center gap-1.5 text-text-secondary dark:text-text-secondary-dark mb-2.5">
+    <div
+      className="rounded-win p-4 border"
+      style={{ background: bg, borderColor: 'rgba(0,0,0,0.08)' }}
+    >
+      <div className="flex items-center gap-1.5 mb-2.5" style={{ color: '#000000' }}>
         {icon}
-        <span className="text-[11px] uppercase tracking-wider font-medium">{label}</span>
+        <span className="text-[11px] uppercase tracking-wider font-semibold">{label}</span>
       </div>
-      <div className="text-xl font-semibold mb-0.5 truncate">{value}</div>
-      <div className="text-[11px] text-text-tertiary truncate">{sub}</div>
+      <div className="text-xl font-bold mb-0.5 truncate" style={{ color: '#000000' }}>{value}</div>
+      <div className="text-[11px] truncate" style={{ color: 'rgba(0,0,0,0.6)' }}>{sub}</div>
       {action}
     </div>
   );

@@ -222,5 +222,6 @@ html.dark .dashboard-animated-bg {
 }
 
 /* Announcement markdown: keep paragraphs tight so each reads as one line */
-.announcement-md p { margin: 0; display: inline; }
-.announcement-md { display: inline; }
+.announcement-md p { margin: 0; display: inline; color: #000000; }
+.announcement-md { display: inline; color: #000000; }
+.announcement-md a { color: #1e2a8a; }

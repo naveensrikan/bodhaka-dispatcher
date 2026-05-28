@@ -288,7 +288,10 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
 
     case 'rememberThis': {
       // Save current input to agent's memory under a key, capping at 10 entries.
-      const key = node.data.key || 'last';
+      // Sanitize the key to a single word with underscores (matches the UI rule)
+      // so {{memory.key}} lookups always work.
+      const rawKey = node.data.key || 'last';
+      const key = String(rawKey).toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '').replace(/_+/g, '_') || 'last';
       const MAX_MEMORIES = 10;
 
       ctx.memory[key] = inputText;
@@ -363,13 +366,39 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'saveToFile': {
-      const filename = (node.data.filename || `output-${Date.now()}.txt`).replace(/[<>:"/\\|?*]/g, '_');
-      const outDir = path.join(app.getPath('documents'), 'Bodhaka Forge');
-      if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
-      const filepath = path.join(outDir, filename);
-      fs.writeFileSync(filepath, inputText, 'utf-8');
-      log(ctx, `  wrote ${filepath}`);
-      return { saved: true, path: filepath };
+      // Only allow safe, plain-text document types. Block anything else
+      // (executables, scripts, etc.) so the app can never create risky files.
+      const ALLOWED_EXT = ['txt', 'md', 'csv', 'json', 'html', 'log'];
+      let filename = (node.data.filename || `output-${Date.now()}.txt`).replace(/[<>:"/\\|?*]/g, '_').trim();
+      if (!filename) filename = `output-${Date.now()}.txt`;
+
+      // Determine extension; if missing or not allowed, handle clearly
+      const dotIdx = filename.lastIndexOf('.');
+      let ext = dotIdx > 0 ? filename.slice(dotIdx + 1).toLowerCase() : '';
+      if (!ext) {
+        filename = `${filename}.txt`;
+        ext = 'txt';
+      }
+      if (!ALLOWED_EXT.includes(ext)) {
+        const msg = `Cannot save ".${ext}" files. Allowed types are: ${ALLOWED_EXT.join(', ')}. Please change the file name in the Save to File block.`;
+        log(ctx, `  ✗ ${msg}`);
+        try { require('./logger').logger.error(`saveToFile blocked: disallowed type ".${ext}" (file "${filename}")`); } catch {}
+        throw new Error(msg);
+      }
+
+      try {
+        const outDir = path.join(app.getPath('documents'), 'Bodhaka Forge');
+        if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
+        const filepath = path.join(outDir, filename);
+        fs.writeFileSync(filepath, inputText, 'utf-8');
+        log(ctx, `  wrote ${filepath}`);
+        return { saved: true, path: filepath };
+      } catch (err: any) {
+        const msg = `Could not save the file: ${err.message}. The app may not have permission to write to your Documents folder.`;
+        log(ctx, `  ✗ ${msg}`);
+        try { require('./logger').logger.error(`saveToFile failed: ${err?.stack || err.message}`); } catch {}
+        throw new Error(msg);
+      }
     }
 
     case 'displayResult':

@@ -168,8 +168,17 @@ function confirmQuit(): boolean {
 
 function createTray() {
   if (tray) return;
-  let img = nativeImage.createFromPath(iconPath());
-  if (!img.isEmpty()) img = img.resize({ width: 16, height: 16 });
+  // Use a dedicated, pre-sized transparent tray icon to avoid a black halo
+  // that appears when downscaling the large app icon on the fly.
+  const trayIconPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'tray-32.png')
+    : path.join(__dirname, '../../resources/tray-32.png');
+  let img = nativeImage.createFromPath(trayIconPath);
+  if (img.isEmpty()) {
+    // Fallback to the app icon if the tray png is missing
+    img = nativeImage.createFromPath(iconPath());
+    if (!img.isEmpty()) img = img.resize({ width: 16, height: 16 });
+  }
   tray = new Tray(img.isEmpty() ? nativeImage.createEmpty() : img);
   tray.setToolTip('Bodhaka Forge');
 

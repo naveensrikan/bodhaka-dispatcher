@@ -24,38 +24,42 @@ export function AnnouncementsCard() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="card p-4 mb-6">
+    <div
+      className="rounded-win p-4 mb-6 border"
+      style={{ background: '#eef5ff', borderColor: 'rgba(0,0,0,0.08)' }}
+    >
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-brand/10 dark:bg-brand-light/20 flex items-center justify-center shrink-0">
-            <Megaphone size={13} className="text-brand dark:text-brand-light" />
+          <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: 'rgba(30,42,138,0.10)' }}>
+            <Megaphone size={13} style={{ color: '#1e2a8a' }} />
           </div>
-          <span className="text-[13px] font-semibold text-text-primary dark:text-text-primary-dark">Announcements</span>
+          <span className="text-[13px] font-bold" style={{ color: '#000000' }}>Announcements</span>
           {fromCache && !loading && (
-            <span className="text-[10px] text-text-tertiary">(offline, showing last synced)</span>
+            <span className="text-[10px]" style={{ color: 'rgba(0,0,0,0.5)' }}>(offline, showing last synced)</span>
           )}
         </div>
         <button
           onClick={load}
           disabled={loading}
           title="Refresh announcements"
-          className="text-text-tertiary hover:text-text-primary dark:hover:text-text-primary-dark transition-colors"
+          style={{ color: 'rgba(0,0,0,0.55)' }}
+          className="hover:opacity-70 transition-opacity"
         >
           <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
         </button>
       </div>
 
       {loading ? (
-        <p className="text-[12px] text-text-tertiary">Loading...</p>
+        <p className="text-[12px]" style={{ color: 'rgba(0,0,0,0.55)' }}>Loading...</p>
       ) : items.length === 0 ? (
-        <p className="text-[12px] text-text-tertiary">No announcements right now.</p>
+        <p className="text-[12px]" style={{ color: 'rgba(0,0,0,0.55)' }}>No announcements right now.</p>
       ) : (
         <ul className="space-y-2.5">
           {items.map((a) => (
-            <li key={a.id} className="text-[12.5px] text-text-secondary dark:text-text-secondary-dark leading-relaxed flex gap-2">
-              <span className="text-brand dark:text-brand-light mt-[3px] shrink-0">•</span>
+            <li key={a.id} className="text-[12.5px] leading-relaxed flex gap-2" style={{ color: '#000000' }}>
+              <span className="mt-[3px] shrink-0" style={{ color: '#1e2a8a' }}>•</span>
               <div className="min-w-0">
-                {a.date && <div className="text-[10.5px] text-text-tertiary mb-0.5">{a.date}</div>}
+                {a.date && <div className="text-[10.5px] mb-0.5" style={{ color: 'rgba(0,0,0,0.5)' }}>{a.date}</div>}
                 <Markdown content={a.text} className="announcement-md" />
               </div>
             </li>
