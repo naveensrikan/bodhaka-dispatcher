@@ -333,14 +333,23 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
       const templateName = node.data.templateName;
 
       if (templateName) {
-        // Pass the agent's generated text as variable "1" by default. If the
-        // node specifies explicit variables, merge them (explicit wins).
-        // sendTemplatedWhatsApp normalizes/fills against the template's declared
-        // placeholders so Twilio always receives a valid ContentVariables set.
-        const explicit = (node.data.variables && typeof node.data.variables === 'object')
-          ? node.data.variables as Record<string, string>
-          : {};
-        const variables: Record<string, string> = { '1': inputText, ...explicit };
+        // Build template variables from the node's variable map (set in the
+        // WhatsApp node settings). One variable is the AI output; the rest are
+        // fixed values the user typed. This guarantees the right number of
+        // variables with the right content, so Twilio accepts the message.
+        const varMap = (node.data.varMap && typeof node.data.varMap === 'object')
+          ? node.data.varMap as Record<string, { mode: 'ai' | 'fixed'; value?: string }>
+          : null;
+
+        let variables: Record<string, string> = {};
+        if (varMap && Object.keys(varMap).length > 0) {
+          for (const [num, conf] of Object.entries(varMap)) {
+            variables[num] = conf.mode === 'ai' ? inputText : (conf.value || '');
+          }
+        } else {
+          // Backward compatibility: no map set — put AI output in {{1}}.
+          variables = { '1': inputText };
+        }
         const result = await sendTemplatedWhatsApp(templateName, to, variables);
         if (!result.sent) throw new Error(result.error || 'WhatsApp send failed');
         log(ctx, `  WhatsApp template "${templateName}" sent to ${to}`);

@@ -15,6 +15,9 @@ export interface TemplateState {
   createdAt: number | null;
   updatedAt: number | null;
   builtin?: boolean;
+  variableLabels?: string[];
+  variableSamples?: Record<string, string>;
+  body?: string;
 }
 
 function loadTwilio() {
@@ -158,6 +161,9 @@ export function getTemplateStates(): TemplateState[] {
       createdAt: row?.created_at || null,
       updatedAt: row?.updated_at || null,
       builtin: (spec as any).builtin !== false,
+      variableLabels: (spec as any).variableLabels || [],
+      variableSamples: (spec as any).variableSamples || {},
+      body: (spec as any).body || '',
     };
   });
 }
@@ -410,24 +416,36 @@ export async function sendTemplatedWhatsApp(
   // Twilio's ContentVariables must be a JSON object whose keys are the numeric
   // placeholders the template declares ("1", "2", ...). If keys are missing or
   // mismatched, Twilio returns "The Content Variables parameter is invalid".
-  // So we build the map strictly from the template's declared variables.
-  const declared = Object.keys(spec.variableSamples || {});
+  //
+  // Ground truth = the placeholders actually present in the template body
+  // (e.g. {{1}}, {{2}}). We union those with any declared samples, so we always
+  // send exactly the keys Twilio expects, even if the stored samples are stale.
+  const bodyPlaceholders = new Set<string>();
+  const bodyText = (spec as any).body || '';
+  const re = /\{\{\s*(\d+)\s*\}\}/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(bodyText)) !== null) bodyPlaceholders.add(m[1]);
+
+  // Combine body placeholders with declared sample keys (body wins for completeness)
+  const declaredKeys = new Set<string>([
+    ...Object.keys(spec.variableSamples || {}),
+    ...bodyPlaceholders,
+  ]);
+  const declared = Array.from(declaredKeys).sort((a, b) => Number(a) - Number(b));
   const safeVars: Record<string, string> = {};
 
   if (declared.length > 0) {
-    // Fill each declared placeholder. Prefer a provided value (by numeric key),
-    // fall back to the template's sample, then to a single space (Twilio rejects
-    // empty strings for a declared variable).
+    // Fill each placeholder. Prefer a provided value (by numeric key), fall back
+    // to the template's sample, then to a single space (Twilio rejects empty
+    // strings for a declared variable).
     for (const key of declared) {
       const provided = variables[key];
-      const sample = spec.variableSamples[key];
+      const sample = spec.variableSamples ? spec.variableSamples[key] : undefined;
       let val = (provided != null && provided !== '') ? provided : (sample || ' ');
       safeVars[key] = String(val).slice(0, 800);
     }
-  } else {
-    // Template declares no variables — send an empty object (valid for Twilio).
-    // Do NOT inject a "1" here, that would be invalid for a no-variable template.
   }
+  // If the template has no placeholders at all, send no ContentVariables.
 
   const fromAddr = cfg.from.startsWith('whatsapp:') ? cfg.from : `whatsapp:${cfg.from.replace(/\s/g, '')}`;
   const toAddr = to.startsWith('whatsapp:') ? to : `whatsapp:${to.replace(/\s/g, '')}`;
@@ -442,6 +460,15 @@ export async function sendTemplatedWhatsApp(
     params.set('ContentVariables', JSON.stringify(safeVars));
   }
 
+  // Diagnostic log: what the template declares vs what we are sending.
+  try {
+    require('./logger').logger.info(
+      `WhatsApp send "${templateName}": declaredVars=[${declared.join(',')}] ` +
+      `incomingVars=[${Object.keys(variables || {}).join(',')}] ` +
+      `sendingVars=${JSON.stringify(safeVars)}`
+    );
+  } catch { /* ignore */ }
+
   try {
     const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${cfg.accountSid}/Messages.json`, {
       method: 'POST',
@@ -452,7 +479,17 @@ export async function sendTemplatedWhatsApp(
       body: params.toString(),
     });
     const json: any = await res.json();
-    if (!res.ok) return { sent: false, error: json.message || `HTTP ${res.status}` };
+    if (!res.ok) {
+      // Log Twilio's full error so we can see the exact cause (code + details)
+      try {
+        require('./logger').logger.error(
+          `WhatsApp send failed for "${templateName}": HTTP ${res.status} ` +
+          `code=${json.code} message=${json.message} more_info=${json.more_info} ` +
+          `contentSid=${contentSid} sentVars=${JSON.stringify(safeVars)}`
+        );
+      } catch { /* ignore */ }
+      return { sent: false, error: json.message || `HTTP ${res.status}` };
+    }
     return { sent: true, sid: json.sid };
   } catch (err: any) {
     return { sent: false, error: err.message };

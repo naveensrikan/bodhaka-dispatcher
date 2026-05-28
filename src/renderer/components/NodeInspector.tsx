@@ -413,16 +413,7 @@ function WhatsAppNodeFields({
           )}
 
           {selectedTemplate && (
-            <div className="mt-3 p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle border border-border dark:border-border-dark text-[11px]">
-              <div className="flex items-center gap-1 mb-1.5">
-                <CheckCircle2 size={11} className="text-success" />
-                <span className="font-medium">{selectedTemplate.displayName}</span>
-              </div>
-              <div className="text-text-secondary mb-2">{selectedTemplate.description}</div>
-              <div className="text-text-secondary">
-                Upstream content automatically fills {'{{1}}'}.
-              </div>
-            </div>
+            <VariableMapper template={selectedTemplate} data={data} update={update} />
           )}
         </div>
       )}
@@ -431,5 +422,153 @@ function WhatsAppNodeFields({
         Tip: Templates work outside Twilio's 24-hour window. Sandbox freeform only works within 24h of the recipient last messaging your Twilio number.
       </p>
     </>
+  );
+}
+
+/**
+ * Maps each template variable to a value. Reads the actual placeholders the
+ * template declares, shows one row per variable, and requires every variable to
+ * be filled. Exactly one variable may be set to "the AI output"; the rest are
+ * typed fixed values. This prevents blindly sending a template with wrong or
+ * missing variables (which Twilio rejects).
+ *
+ * Stored on the node as:
+ *   data.varMap = { "1": { mode: 'ai' }, "2": { mode: 'fixed', value: 'Maths' }, ... }
+ */
+function VariableMapper({
+  template, data, update,
+}: {
+  template: any;
+  data: Record<string, any>;
+  update: (patch: Record<string, any>) => void;
+}) {
+  // Find the variable numbers from the template body ({{1}}, {{2}}, ...),
+  // falling back to the sample keys / labels length.
+  const body: string = template.body || '';
+  const fromBody = Array.from(new Set(
+    (body.match(/\{\{\s*(\d+)\s*\}\}/g) || []).map((s: string) => s.replace(/[^\d]/g, ''))
+  ));
+  const fromSamples = Object.keys(template.variableSamples || {});
+  const varNums = (fromBody.length ? fromBody : fromSamples).sort((a, b) => Number(a) - Number(b));
+  const labels: string[] = template.variableLabels || [];
+
+  const varMap: Record<string, { mode: 'ai' | 'fixed'; value?: string }> = data.varMap || {};
+
+  // On first view of a template, seed a sensible default: variable 1 = AI output,
+  // the rest = empty fixed values the user must fill. Runs once per template.
+  useEffect(() => {
+    if (varNums.length > 0 && (!data.varMap || Object.keys(data.varMap).length === 0)) {
+      const seed: Record<string, { mode: 'ai' | 'fixed'; value?: string }> = {};
+      varNums.forEach((num, i) => {
+        seed[num] = i === 0 ? { mode: 'ai' } : { mode: 'fixed', value: '' };
+      });
+      update({ varMap: seed });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [template.name]);
+
+  function setVar(num: string, patch: { mode?: 'ai' | 'fixed'; value?: string }) {
+    const next = { ...varMap };
+    const current = next[num] || { mode: 'fixed', value: '' };
+    let updated = { ...current, ...patch };
+    // Enforce: only ONE variable can be 'ai'. If this one becomes 'ai',
+    // switch any other 'ai' variable back to 'fixed'.
+    if (patch.mode === 'ai') {
+      for (const k of Object.keys(next)) {
+        if (k !== num && next[k]?.mode === 'ai') next[k] = { mode: 'fixed', value: next[k].value || '' };
+      }
+    }
+    next[num] = updated;
+    update({ varMap: next });
+  }
+
+  // Validation: every variable must be filled (ai counts as filled; fixed needs text)
+  const missing = varNums.filter((num) => {
+    const v = varMap[num];
+    if (!v) return true;
+    if (v.mode === 'ai') return false;
+    return !v.value || !v.value.trim();
+  });
+  const aiCount = varNums.filter((num) => varMap[num]?.mode === 'ai').length;
+
+  if (varNums.length === 0) {
+    return (
+      <div className="mt-3 p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle border border-border dark:border-border-dark text-[11px] text-text-secondary">
+        This template has no variables. The message will be sent exactly as approved.
+      </div>
+    );
+  }
+
+  return (
+    <div className="mt-3 p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle border border-border dark:border-border-dark">
+      <div className="text-[12px] font-medium mb-1">Fill the template variables</div>
+      <p className="hint mb-3">
+        This template has <b>{varNums.length}</b> variable{varNums.length !== 1 ? 's' : ''}. Fill each one. Choose <b>one</b> to receive the agent's AI output; type a fixed value for the rest. All are required.
+      </p>
+
+      <div className="space-y-3">
+        {varNums.map((num, i) => {
+          const v = varMap[num] || { mode: 'fixed', value: '' };
+          const label = labels[i] || `Variable ${num}`;
+          return (
+            <div key={num} className="border border-border dark:border-border-dark rounded-win p-2.5">
+              <div className="text-[12px] font-medium mb-1.5">
+                <span className="font-mono text-text-tertiary mr-1">{`{{${num}}}`}</span> {label}
+              </div>
+              <div className="flex gap-3 mb-2 text-[12px]">
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`varmode-${num}`}
+                    checked={v.mode === 'ai'}
+                    onChange={() => setVar(num, { mode: 'ai' })}
+                  />
+                  Use the AI output
+                </label>
+                <label className="flex items-center gap-1.5 cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`varmode-${num}`}
+                    checked={v.mode !== 'ai'}
+                    onChange={() => setVar(num, { mode: 'fixed' })}
+                  />
+                  Type a value
+                </label>
+              </div>
+              {v.mode !== 'ai' && (
+                <input
+                  className="input w-full text-[12px]"
+                  value={v.value || ''}
+                  onChange={(e) => setVar(num, { mode: 'fixed', value: e.target.value })}
+                  placeholder={`Example: ${(template.variableSamples || {})[num] || label}`}
+                />
+              )}
+              {v.mode === 'ai' && (
+                <div className="text-[11px] text-success flex items-center gap-1">
+                  <CheckCircle2 size={11} /> This variable will receive the agent's generated text.
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Validation messages */}
+      {aiCount === 0 && (
+        <div className="mt-2 text-[11px] text-warning flex items-center gap-1">
+          <AlertTriangle size={11} /> Tip: usually you want one variable set to "Use the AI output".
+        </div>
+      )}
+      {missing.length > 0 && (
+        <div className="mt-2 text-[11px] text-danger flex items-center gap-1">
+          <AlertTriangle size={11} /> Please fill every variable before saving. Missing: {missing.map((n) => `{{${n}}}`).join(', ')}
+        </div>
+      )}
+      {missing.length === 0 && (
+        <div className="mt-2 text-[11px] text-success flex items-center gap-1">
+          <CheckCircle2 size={11} /> All variables mapped. Ready to send.
+        </div>
+      )}
+    </div>
   );
 }
