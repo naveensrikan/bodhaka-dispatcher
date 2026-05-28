@@ -1,9 +1,9 @@
 import fs from 'fs';
 import path from 'path';
+import { app } from 'electron';
 import OpenAI from 'openai';
 import { getDb } from '../db/database';
 
-// Lazy require to avoid load issues with pdf-parse
 async function extractPdf(filePath: string): Promise<string> {
   const pdfParse = require('pdf-parse');
   const dataBuffer = fs.readFileSync(filePath);
@@ -25,10 +25,6 @@ export async function extractText(filePath: string): Promise<string> {
   throw new Error(`Unsupported file type: ${ext}`);
 }
 
-/**
- * Split text into overlapping chunks for embedding.
- * Default ~1000 chars per chunk with 200 char overlap.
- */
 export function chunkText(text: string, chunkSize = 1000, overlap = 200): string[] {
   const cleaned = text.replace(/\s+/g, ' ').trim();
   if (cleaned.length <= chunkSize) return [cleaned];
@@ -44,31 +40,80 @@ export function chunkText(text: string, chunkSize = 1000, overlap = 200): string
 }
 
 /**
- * Embed an array of texts using the user's configured LLM provider.
- * Falls back to no embedding (returns nulls) if no embedding model is available.
+ * Local embedding model via Transformers.js (all-MiniLM-L6-v2, 384-dim).
+ * Lazily loaded and cached. Model weights (~25MB) download once on first use
+ * and are cached in the app's userData folder so it works offline afterward.
+ */
+let localEmbedder: any = null;
+let localEmbedderLoading: Promise<any> | null = null;
+
+async function getLocalEmbedder(): Promise<any> {
+  if (localEmbedder) return localEmbedder;
+  if (localEmbedderLoading) return localEmbedderLoading;
+
+  localEmbedderLoading = (async () => {
+    try {
+      const { pipeline, env } = await import('@xenova/transformers');
+      // Cache models inside the app's userData so they persist
+      env.cacheDir = path.join(app.getPath('userData'), 'models');
+      env.allowRemoteModels = true;
+      const embedder = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
+      localEmbedder = embedder;
+      console.log('[knowledge] local embedder ready');
+      return embedder;
+    } catch (err) {
+      console.error('[knowledge] local embedder failed to load:', err);
+      return null;
+    }
+  })();
+
+  return localEmbedderLoading;
+}
+
+/**
+ * Embed texts. Strategy:
+ * 1. If OpenAI key present → use OpenAI embeddings (best quality)
+ * 2. Else → use local Transformers.js model (works for all providers, offline)
+ * 3. If both fail → return nulls (search falls back to keyword matching)
  */
 export async function embedTexts(texts: string[]): Promise<(number[] | null)[]> {
   const db = getDb();
   const row = db.prepare('SELECT value FROM config WHERE key = ?').get('llm') as { value: string } | undefined;
-  if (!row) return texts.map(() => null);
-  const cfg = JSON.parse(row.value) as { provider: string; apiKey: string };
+  const cfg = row ? JSON.parse(row.value) : {};
 
-  // Only OpenAI exposes embeddings in v1. For Anthropic users, we still store
-  // chunks but skip embedding and fall back to keyword search.
-  if (cfg.provider !== 'openai' || !cfg.apiKey) return texts.map(() => null);
-
-  const client = new OpenAI({ apiKey: cfg.apiKey });
-  const out: (number[] | null)[] = [];
-  // Batch in groups of 100
-  for (let i = 0; i < texts.length; i += 100) {
-    const batch = texts.slice(i, i + 100);
-    const res = await client.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: batch,
-    });
-    for (const item of res.data) out.push(item.embedding);
+  // Path 1: OpenAI embeddings
+  if (cfg.provider === 'openai' && cfg.apiKey) {
+    try {
+      const client = new OpenAI({ apiKey: cfg.apiKey });
+      const out: (number[] | null)[] = [];
+      for (let i = 0; i < texts.length; i += 100) {
+        const batch = texts.slice(i, i + 100);
+        const res = await client.embeddings.create({ model: 'text-embedding-3-small', input: batch });
+        for (const item of res.data) out.push(item.embedding);
+      }
+      return out;
+    } catch (err) {
+      console.error('[knowledge] OpenAI embeddings failed, falling back to local:', err);
+    }
   }
-  return out;
+
+  // Path 2: Local embeddings (works regardless of provider)
+  const embedder = await getLocalEmbedder();
+  if (embedder) {
+    try {
+      const out: (number[] | null)[] = [];
+      for (const text of texts) {
+        const result = await embedder(text, { pooling: 'mean', normalize: true });
+        out.push(Array.from(result.data as Float32Array));
+      }
+      return out;
+    } catch (err) {
+      console.error('[knowledge] local embedding failed:', err);
+    }
+  }
+
+  // Path 3: no embeddings
+  return texts.map(() => null);
 }
 
 export function cosineSimilarity(a: number[], b: number[]): number {
@@ -80,4 +125,13 @@ export function cosineSimilarity(a: number[], b: number[]): number {
     nb += b[i] * b[i];
   }
   return dot / (Math.sqrt(na) * Math.sqrt(nb) + 1e-9);
+}
+
+/** Simple keyword score fallback when no embeddings exist */
+export function keywordScore(query: string, content: string): number {
+  const qWords = query.toLowerCase().split(/\s+/).filter((w) => w.length > 2);
+  const lc = content.toLowerCase();
+  let hits = 0;
+  for (const w of qWords) if (lc.includes(w)) hits++;
+  return qWords.length ? hits / qWords.length : 0;
 }

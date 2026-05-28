@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link as LinkComp } from 'react-router-dom';
 import { X, AlertTriangle, CheckCircle2, Clock as ClockIcon } from 'lucide-react';
 import { NODE_META } from './FlowNode';
+import { CronBuilder } from './CronBuilder';
 
 interface NodeInspectorProps {
   node: any;
@@ -45,11 +46,11 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
 
         {node.type === 'scheduleTrigger' && (
           <div>
-            <label className="label">Cron Expression</label>
-            <input className="input w-full font-mono" value={data.cron || ''} onChange={(e) => update({ cron: e.target.value })} placeholder="0 7 * * *" />
-            <p className="text-[11px] text-text-tertiary mt-1.5">
-              <span className="font-mono">0 7 * * *</span> daily 7am · <span className="font-mono">0 18 * * 5</span> Fri 6pm · <span className="font-mono">*/30 * * * *</span> every 30 min
-            </p>
+            <label className="label">Schedule</label>
+            <CronBuilder
+              value={data.cron || ''}
+              onChange={(cron) => update({ cron })}
+            />
           </div>
         )}
 
@@ -61,27 +62,76 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
         )}
 
         {node.type === 'knowledgeBase' && (
-          <div>
-            <label className="label">Documents to use</label>
-            <div className="space-y-1 max-h-60 overflow-y-auto pr-1 card p-2">
-              {knowledgeDocs.length === 0 && <p className="text-[12px] text-text-tertiary">No documents yet. Upload in Knowledge Base.</p>}
-              {knowledgeDocs.map((d: any) => (
-                <label key={d.id} className="flex items-center gap-2 text-[12px] cursor-pointer hover:bg-bg-hover dark:hover:bg-bg-dark-subtle p-1 rounded">
-                  <input
-                    type="checkbox"
-                    checked={data.docIds?.includes(d.id) || false}
-                    onChange={(ev) => {
-                      const ids = new Set(data.docIds || []);
-                      if (ev.target.checked) ids.add(d.id); else ids.delete(d.id);
-                      update({ docIds: Array.from(ids) });
-                    }}
-                  />
-                  <span className="flex-1 truncate">{d.filename}</span>
-                </label>
-              ))}
+          <>
+            <div>
+              <label className="label">Documents to use</label>
+              <div className="space-y-1 max-h-48 overflow-y-auto pr-1 card p-2">
+                {knowledgeDocs.length === 0 && <p className="text-[12px] text-text-tertiary">No documents yet. Upload in Knowledge Base.</p>}
+                {knowledgeDocs.map((d: any) => (
+                  <label key={d.id} className="flex items-center gap-2 text-[12px] cursor-pointer hover:bg-bg-hover dark:hover:bg-bg-dark-subtle p-1 rounded">
+                    <input
+                      type="checkbox"
+                      checked={data.docIds?.includes(d.id) || false}
+                      onChange={(ev) => {
+                        const ids = new Set(data.docIds || []);
+                        if (ev.target.checked) ids.add(d.id); else ids.delete(d.id);
+                        update({ docIds: Array.from(ids) });
+                      }}
+                    />
+                    <span className="flex-1 truncate">{d.filename}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-[11px] text-text-tertiary mt-2">Leave all unchecked to use everything.</p>
             </div>
-            <p className="text-[11px] text-text-tertiary mt-2">Leave all unchecked to use everything.</p>
-          </div>
+
+            <div>
+              <label className="label">Mode</label>
+              <div className="space-y-1.5">
+                <label className="flex items-start gap-2 cursor-pointer p-2 rounded-win border border-border dark:border-border-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle">
+                  <input
+                    type="radio"
+                    name="kbMode"
+                    checked={data.fullSummary !== false}
+                    onChange={() => update({ fullSummary: true })}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="text-[12px] font-medium">Complete summary</div>
+                    <div className="text-[11px] text-text-tertiary">Use the entire selected material (best for whole-chapter summaries)</div>
+                  </div>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer p-2 rounded-win border border-border dark:border-border-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle">
+                  <input
+                    type="radio"
+                    name="kbMode"
+                    checked={data.fullSummary === false}
+                    onChange={() => update({ fullSummary: false })}
+                    className="mt-0.5"
+                  />
+                  <div>
+                    <div className="text-[12px] font-medium">Specific topic</div>
+                    <div className="text-[11px] text-text-tertiary">Retrieve only the most relevant parts about a topic (semantic search)</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {data.fullSummary === false && (
+              <div>
+                <label className="label">Topic to focus on</label>
+                <input
+                  className="input w-full"
+                  value={data.topic || ''}
+                  onChange={(e) => update({ topic: e.target.value })}
+                  placeholder="e.g. photosynthesis, Newton's laws, French Revolution"
+                />
+                <p className="text-[11px] text-text-tertiary mt-1.5">
+                  Only content matching this topic is pulled, then summarized/quizzed downstream.
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {node.type === 'webSearch' && (

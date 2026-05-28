@@ -71,6 +71,7 @@ export interface WhatsAppTemplateState {
   rejectionReason: string | null;
   createdAt: number | null;
   updatedAt: number | null;
+  builtin?: boolean;
 }
 
 export interface ProvisionResult {
@@ -127,7 +128,11 @@ declare global {
       whatsapp: {
         listTemplates: () => Promise<WhatsAppTemplateState[] | { error: string }>;
         provisionTemplates: () => Promise<ProvisionResult>;
+        provisionOne: (name: string) => Promise<{ ok: boolean; state?: WhatsAppTemplateState; error?: string }>;
         refreshStatus: () => Promise<WhatsAppTemplateState[] | { error: string }>;
+        saveCustom: (spec: any) => Promise<{ ok: boolean; error?: string }>;
+        listCustom: () => Promise<any[]>;
+        deleteCustom: (name: string) => Promise<{ ok: boolean; error?: string }>;
       };
       shell: {
         openExternal: (url: string) => Promise<void>;

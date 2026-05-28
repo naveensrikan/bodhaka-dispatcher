@@ -6,10 +6,12 @@ import {
   type Node, type Edge, type Connection,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save, Play, ArrowLeft, Loader2, Download, Copy as CopyIcon } from 'lucide-react';
+import { Save, Play, ArrowLeft, Loader2, Download, Copy as CopyIcon, Clock } from 'lucide-react';
 import { NodePalette } from '../components/NodePalette';
 import { FlowNode } from '../components/FlowNode';
 import { NodeInspector } from '../components/NodeInspector';
+import { CronBuilder } from '../components/CronBuilder';
+import { cronToHuman } from '../lib/cron';
 import { useToast } from '../components/Toast';
 
 const nodeTypes = {
@@ -31,6 +33,7 @@ function BuilderInner() {
   const [name, setName] = useState('Untitled Agent');
   const [description, setDescription] = useState('');
   const [schedule, setSchedule] = useState('');
+  const [showCron, setShowCron] = useState(false);
   const [enabled, setEnabled] = useState(true);
   const [selected, setSelected] = useState<Node | null>(null);
   const [saving, setSaving] = useState(false);
@@ -153,7 +156,33 @@ function BuilderInner() {
       <div className="h-12 border-b border-border dark:border-border-dark flex items-center gap-2 px-4 bg-bg-layer dark:bg-bg-dark-layer">
         <button onClick={() => navigate('/agents')} className="btn-ghost p-1.5"><ArrowLeft size={14} /></button>
         <input className="flex-1 bg-transparent text-[14px] font-semibold outline-none placeholder:text-text-tertiary" value={name} onChange={(e) => setName(e.target.value)} placeholder="Agent name" />
-        <input className="input text-[11px] font-mono w-36" value={schedule} onChange={(e) => setSchedule(e.target.value)} placeholder="cron: 0 7 * * *" />
+        <div className="relative">
+          <button
+            onClick={() => setShowCron((s) => !s)}
+            className="btn-secondary text-[12px]"
+            title="Set schedule"
+          >
+            <Clock size={13} />
+            {schedule ? cronToHuman(schedule) : 'Set schedule'}
+          </button>
+          {showCron && (
+            <div className="absolute top-10 right-0 z-50 w-[520px] card p-4 shadow-win-flyout">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-[13px] font-semibold">When should this agent run?</span>
+                <button onClick={() => setShowCron(false)} className="text-text-tertiary hover:text-text-primary text-[12px]">Done</button>
+              </div>
+              <CronBuilder value={schedule} onChange={setSchedule} />
+              {schedule && (
+                <button
+                  onClick={() => { setSchedule(''); }}
+                  className="mt-3 text-[11px] text-danger hover:underline"
+                >
+                  Clear schedule (manual trigger only)
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <label className="flex items-center gap-1.5 text-[12px] text-text-secondary px-2">
           <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />
           enabled

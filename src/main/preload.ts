@@ -45,7 +45,11 @@ const api = {
   whatsapp: {
     listTemplates: () => ipcRenderer.invoke('whatsapp:listTemplates'),
     provisionTemplates: () => ipcRenderer.invoke('whatsapp:provisionTemplates'),
+    provisionOne: (name: string) => ipcRenderer.invoke('whatsapp:provisionOne', name),
     refreshStatus: () => ipcRenderer.invoke('whatsapp:refreshStatus'),
+    saveCustom: (spec: unknown) => ipcRenderer.invoke('whatsapp:saveCustom', spec),
+    listCustom: () => ipcRenderer.invoke('whatsapp:listCustom'),
+    deleteCustom: (name: string) => ipcRenderer.invoke('whatsapp:deleteCustom', name),
   },
   shell: {
     openExternal: (url: string) => ipcRenderer.invoke('shell:openExternal', url),

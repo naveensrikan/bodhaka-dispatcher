@@ -14,6 +14,7 @@ export interface TemplateState {
   rejectionReason: string | null;
   createdAt: number | null;
   updatedAt: number | null;
+  builtin?: boolean;
 }
 
 function loadTwilio() {
@@ -51,16 +52,101 @@ export function initTemplateTable() {
 }
 
 /**
+ * Provision a single template by name. Used for the "provision individual" feature.
+ */
+export async function provisionSingleTemplate(templateName: string): Promise<{
+  ok: boolean;
+  state?: TemplateState;
+  error?: string;
+}> {
+  initTemplateTable();
+  const cfg = loadTwilio();
+  const db = getDb();
+  const now = Date.now();
+
+  // Find spec — either builtin or a user-created custom one stored in DB
+  let spec = findTemplateSpec(templateName);
+  if (!spec) {
+    const customRow = db.prepare('SELECT spec FROM wa_custom_templates WHERE name = ?').get(templateName) as { spec: string } | undefined;
+    if (customRow) spec = JSON.parse(customRow.spec);
+  }
+  if (!spec) return { ok: false, error: 'Template spec not found' };
+
+  try {
+    const result = await provisionOne(spec, cfg);
+    db.prepare(`
+      INSERT INTO wa_templates (account_sid, template_name, content_sid, approval_status, created_at, updated_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+      ON CONFLICT(account_sid, template_name) DO UPDATE SET
+        content_sid = excluded.content_sid, approval_status = excluded.approval_status, updated_at = excluded.updated_at
+    `).run(cfg.accountSid, spec.name, result.contentSid, result.approvalStatus, now, now);
+    const states = getTemplateStates();
+    return { ok: true, state: states.find((s) => s.name === templateName) };
+  } catch (err: any) {
+    return { ok: false, error: err.message };
+  }
+}
+
+/**
+ * Initialize the custom templates table.
+ */
+export function initCustomTemplateTable() {
+  const db = getDb();
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS wa_custom_templates (
+      name TEXT PRIMARY KEY,
+      spec TEXT NOT NULL,
+      created_at INTEGER NOT NULL
+    );
+  `);
+}
+
+/**
+ * Save a user-created custom template spec (does not provision it yet).
+ */
+export function saveCustomTemplate(spec: WhatsAppTemplateSpec): { ok: boolean; error?: string } {
+  initCustomTemplateTable();
+  const { validateTemplateBody } = require('./whatsappTemplates');
+  const err = validateTemplateBody(spec.body);
+  if (err) return { ok: false, error: err };
+
+  const db = getDb();
+  // Normalize name to lowercase alphanumeric+underscore
+  spec.name = spec.name.toLowerCase().replace(/[^a-z0-9_]/g, '_');
+  if (findTemplateSpec(spec.name)) return { ok: false, error: 'A built-in template already uses this name' };
+
+  db.prepare('INSERT OR REPLACE INTO wa_custom_templates (name, spec, created_at) VALUES (?, ?, ?)')
+    .run(spec.name, JSON.stringify({ ...spec, builtin: false, category: 'UTILITY', contentType: 'twilio/text', language: spec.language || 'en' }), Date.now());
+  return { ok: true };
+}
+
+export function listCustomTemplates(): WhatsAppTemplateSpec[] {
+  initCustomTemplateTable();
+  const db = getDb();
+  const rows = db.prepare('SELECT spec FROM wa_custom_templates ORDER BY created_at DESC').all() as { spec: string }[];
+  return rows.map((r) => JSON.parse(r.spec));
+}
+
+export function deleteCustomTemplate(name: string): void {
+  const db = getDb();
+  db.prepare('DELETE FROM wa_custom_templates WHERE name = ?').run(name);
+}
+
+/**
  * Get current state of all 8 Bodhaka templates for the current Twilio account.
  * Templates that haven't been provisioned yet show as 'not_provisioned'.
  */
 export function getTemplateStates(): TemplateState[] {
   const cfg = loadTwilio();
   const db = getDb();
+  initCustomTemplateTable();
   const rows = db.prepare('SELECT * FROM wa_templates WHERE account_sid = ?').all(cfg.accountSid) as any[];
   const byName = new Map(rows.map((r) => [r.template_name, r]));
 
-  return WHATSAPP_TEMPLATES.map((spec) => {
+  const custom = listCustomTemplates();
+  const allSpecs = [...WHATSAPP_TEMPLATES, ...custom];
+
+  return allSpecs.map((spec) => {
     const row = byName.get(spec.name);
     return {
       name: spec.name,
@@ -72,6 +158,7 @@ export function getTemplateStates(): TemplateState[] {
       rejectionReason: row?.rejection_reason || null,
       createdAt: row?.created_at || null,
       updatedAt: row?.updated_at || null,
+      builtin: (spec as any).builtin !== false,
     };
   });
 }
@@ -156,7 +243,8 @@ export async function provisionAllTemplates(): Promise<{
   let skipped = 0;
   const failed: { name: string; error: string }[] = [];
 
-  for (const spec of WHATSAPP_TEMPLATES) {
+  const allSpecs = [...WHATSAPP_TEMPLATES, ...listCustomTemplates()];
+  for (const spec of allSpecs) {
     if (existing.has(spec.name)) {
       skipped++;
       continue;

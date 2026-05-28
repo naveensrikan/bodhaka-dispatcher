@@ -145,9 +145,41 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     case 'knowledgeBase': {
       const db = getDb();
       const docIds: string[] = node.data.docIds || [];
+      const topic: string = (node.data.topic || '').trim();
+      const fullSummary: boolean = node.data.fullSummary !== false; // default true
+
+      // If a topic is specified and not in full-summary mode, do semantic retrieval
+      if (topic && !fullSummary) {
+        const { embedTexts, cosineSimilarity, keywordScore } = require('./knowledge');
+        const [queryEmb] = await embedTexts([topic]);
+        let sql = `SELECT c.content, c.embedding FROM knowledge_chunks c`;
+        const params: any[] = [];
+        if (docIds.length > 0) {
+          sql += ` WHERE c.doc_id IN (${docIds.map(() => '?').join(',')})`;
+          params.push(...docIds);
+        }
+        const rows = db.prepare(sql).all(...params) as any[];
+        const scored = rows.map((row) => {
+          let score = 0;
+          if (queryEmb && row.embedding) {
+            const emb = Array.from(new Float32Array(row.embedding.buffer, row.embedding.byteOffset, row.embedding.byteLength / 4));
+            score = cosineSimilarity(queryEmb, emb);
+          } else {
+            score = keywordScore(topic, row.content);
+          }
+          return { content: row.content, score };
+        });
+        scored.sort((a, b) => b.score - a.score);
+        const top = scored.slice(0, node.data.topK || 8);
+        const text = top.map((r) => r.content).join('\n\n');
+        log(ctx, `  retrieved ${top.length} chunks on topic "${topic}"`);
+        return text;
+      }
+
+      // Full summary mode: load all chunks from selected docs
       let rows: { content: string }[];
       if (docIds.length === 0) {
-        rows = db.prepare('SELECT content FROM knowledge_chunks LIMIT 50').all() as { content: string }[];
+        rows = db.prepare('SELECT content FROM knowledge_chunks LIMIT 100').all() as { content: string }[];
       } else {
         const placeholders = docIds.map(() => '?').join(',');
         rows = db.prepare(
@@ -155,7 +187,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
         ).all(...docIds) as { content: string }[];
       }
       const text = rows.map((r) => r.content).join('\n\n');
-      log(ctx, `  loaded ${rows.length} chunks (${text.length} chars)`);
+      log(ctx, `  loaded ${rows.length} chunks (full)`);
       return text;
     }
 
@@ -227,9 +259,11 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
 
     case 'sendEmail': {
       const to = node.data.to;
-      const subject = node.data.subject || 'From your Student Agent';
+      const subject = node.data.subject || 'From your Bodhaka Forge agent';
       if (!to) throw new Error('Email recipient is empty');
-      const result = await withRetry(() => sendEmail(to, subject, inputText), 2, ctx, 'email send');
+      const { renderEmailHtml } = require('./emailRender');
+      const html = await renderEmailHtml(inputText, subject);
+      const result = await withRetry(() => sendEmail(to, subject, html, true), 2, ctx, 'email send');
       log(ctx, `  email sent to ${to}`);
       return { sent: true, to, subject, messageId: result.messageId };
     }
