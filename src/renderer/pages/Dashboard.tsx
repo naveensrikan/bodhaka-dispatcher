@@ -19,6 +19,7 @@ export function Dashboard() {
 
   const llmReady = !!config?.llm?.apiKey || config?.llm?.provider === 'ollama';
   const smtpReady = !!config?.smtp?.host;
+  const emailVerified = !!(config?.contact?.emailVerified && config?.contact?.email);
   const enabledAgents = agents.filter((a) => a.enabled).length;
 
   const currency = config?.currency || { code: 'USD', symbol: '$', rateFromUsd: 1 };
@@ -38,7 +39,7 @@ export function Dashboard() {
   const setupSteps = [
     { done: !!config?.profile?.name, label: 'Add your profile', to: '/configuration' },
     { done: llmReady, label: 'Connect an AI provider', to: '/configuration' },
-    { done: smtpReady, label: 'Configure email delivery', to: '/configuration' },
+    { done: emailVerified, label: 'Verify your email for delivery', to: '/configuration' },
     { done: agents.length > 0, label: 'Create your first agent', to: '/templates' },
   ];
   const setupComplete = setupSteps.every((s) => s.done);

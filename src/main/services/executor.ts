@@ -72,6 +72,7 @@ function applyMemoryTokens(text: string, memory: Record<string, any>): string {
   // Then the catch-all {{memory}} → readable "key: value" lines
   if (out.includes('{{memory}}')) {
     const all = Object.entries(memory)
+      .filter(([k]) => k !== '__order')
       .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
       .join('\n');
     out = out.replaceAll('{{memory}}', all);
@@ -286,11 +287,26 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'rememberThis': {
-      // Save current input to agent's memory under a key
+      // Save current input to agent's memory under a key, capping at 10 entries.
       const key = node.data.key || 'last';
+      const MAX_MEMORIES = 10;
+
       ctx.memory[key] = inputText;
+
+      // Maintain insertion order in a hidden bookkeeping array
+      const order: string[] = Array.isArray(ctx.memory.__order) ? ctx.memory.__order : [];
+      const without = order.filter((k) => k !== key);
+      without.push(key); // most recent at the end
+
+      // Evict oldest keys beyond the cap
+      while (without.length > MAX_MEMORIES) {
+        const oldest = without.shift();
+        if (oldest && oldest !== key) delete ctx.memory[oldest];
+      }
+      ctx.memory.__order = without;
+
       saveMemory(ctx.agentId, ctx.memory);
-      log(ctx, `  saved to memory: ${key}`);
+      log(ctx, `  saved to memory: ${key} (${without.length}/${MAX_MEMORIES} kept)`);
       return inputText;
     }
 

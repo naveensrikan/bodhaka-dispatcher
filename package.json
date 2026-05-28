@@ -1,6 +1,6 @@
 {
   "name": "bodhaka-forge",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Bodhaka Forge — Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
   "main": "dist/main/index.js",
   "author": "BuoyantWave Learning Technologies LLP",
@@ -13,8 +13,8 @@
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
     "build:main": "tsc -p tsconfig.main.json",
-    "package:win": "npm run build && electron-builder --win",
-    "package:mac": "npm run build && electron-builder --mac",
+    "package:win": "npm run build && electron-builder --win --publish never",
+    "package:mac": "npm run build && electron-builder --mac --publish never",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "better-sqlite3": "^11.5.0",
     "clsx": "^2.1.1",
     "cron-parser": "^4.9.0",
+    "electron-updater": "^6.3.9",
     "katex": "^0.16.11",
     "lucide-react": "^0.460.0",
     "mammoth": "^1.8.0",
@@ -65,7 +66,13 @@
   "build": {
     "appId": "org.bodhaka.forge",
     "productName": "Bodhaka Forge",
-    "publish": null,
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "naveensrikan",
+        "repo": "student-agent-builder"
+      }
+    ],
     "directories": {
       "output": "release",
       "buildResources": "resources"
@@ -74,6 +81,7 @@
       "dist/**/*",
       "package.json"
     ],
+    "asar": true,
     "extraResources": [
       {
         "from": "resources/logo.png",
@@ -98,8 +106,7 @@
         }
       ],
       "icon": "resources/icon.ico",
-      "artifactName": "${productName}-Setup-${version}.${ext}",
-      "publish": null
+      "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "nsis": {
       "oneClick": false,

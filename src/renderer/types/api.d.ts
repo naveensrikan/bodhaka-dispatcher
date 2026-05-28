@@ -158,6 +158,15 @@ declare global {
         run: (agentId: string) => Promise<{ runId: string; status: string; error?: string }>;
         onMissed: (callback: (data: any) => void) => () => void;
       };
+      update: {
+        check: () => Promise<{ ok: boolean; version?: string | null; error?: string }>;
+        download: () => Promise<{ ok: boolean; error?: string }>;
+        onAvailable: (cb: (info: { version: string; releaseDate?: string; notes?: string }) => void) => () => void;
+        onProgress: (cb: (pct: number) => void) => () => void;
+        onDownloaded: (cb: () => void) => () => void;
+        onNone: (cb: () => void) => () => void;
+        onError: (cb: (msg: string) => void) => () => void;
+      };
       execution: {
         onRunUpdate: (callback: (data: any) => void) => () => void;
       };

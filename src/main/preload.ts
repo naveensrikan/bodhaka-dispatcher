@@ -67,6 +67,35 @@ const api = {
       return () => ipcRenderer.removeListener('catchup:missed', listener);
     },
   },
+  update: {
+    check: () => ipcRenderer.invoke('update:check'),
+    download: () => ipcRenderer.invoke('update:download'),
+    onAvailable: (cb: (info: unknown) => void) => {
+      const l = (_: unknown, info: unknown) => cb(info);
+      ipcRenderer.on('update:available', l);
+      return () => ipcRenderer.removeListener('update:available', l);
+    },
+    onProgress: (cb: (pct: number) => void) => {
+      const l = (_: unknown, pct: number) => cb(pct);
+      ipcRenderer.on('update:progress', l);
+      return () => ipcRenderer.removeListener('update:progress', l);
+    },
+    onDownloaded: (cb: () => void) => {
+      const l = () => cb();
+      ipcRenderer.on('update:downloaded', l);
+      return () => ipcRenderer.removeListener('update:downloaded', l);
+    },
+    onNone: (cb: () => void) => {
+      const l = () => cb();
+      ipcRenderer.on('update:none', l);
+      return () => ipcRenderer.removeListener('update:none', l);
+    },
+    onError: (cb: (msg: string) => void) => {
+      const l = (_: unknown, msg: string) => cb(msg);
+      ipcRenderer.on('update:error', l);
+      return () => ipcRenderer.removeListener('update:error', l);
+    },
+  },
   execution: {
     onRunUpdate: (callback: (data: unknown) => void) => {
       const listener = (_: unknown, data: unknown) => callback(data);

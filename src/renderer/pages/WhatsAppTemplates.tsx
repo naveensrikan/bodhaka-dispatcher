@@ -313,12 +313,14 @@ function CustomTemplateForm({ onClose, onCreated }: { onClose: () => void; onCre
   const [displayName, setDisplayName] = useState('');
   const [description, setDescription] = useState('');
   const [body, setBody] = useState('');
+  const [samples, setSamples] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
   const toast = useToast();
 
   // Count variables in body
   const varMatches = body.match(/\{\{(\d+)\}\}/g) || [];
   const uniqueVars = [...new Set(varMatches)];
+  const varNums = uniqueVars.map((v) => v.replace(/[{}]/g, ''));
 
   // Live validation
   const trimmed = body.trim();
@@ -326,6 +328,8 @@ function CustomTemplateForm({ onClose, onCreated }: { onClose: () => void; onCre
   if (trimmed && /^\{\{/.test(trimmed)) validationError = 'Body cannot start with a variable, add text before {{1}}.';
   else if (trimmed && /\}\}$/.test(trimmed)) validationError = 'Body cannot end with a variable, add text after the last variable.';
   else if (trimmed.length > 1024) validationError = 'Body exceeds 1024 characters.';
+
+  const missingSamples = varNums.filter((n) => !(samples[n] && samples[n].trim()));
 
   async function save() {
     if (!displayName.trim() || !body.trim()) {
@@ -336,13 +340,16 @@ function CustomTemplateForm({ onClose, onCreated }: { onClose: () => void; onCre
       toast.show(validationError, 'error');
       return;
     }
+    if (missingSamples.length > 0) {
+      toast.show(`Please give a sample value for each variable. Meta needs samples to approve the template.`, 'error');
+      return;
+    }
     setSaving(true);
     const name = displayName.toLowerCase().replace(/[^a-z0-9]+/g, '_').slice(0, 40);
     const variableSamples: Record<string, string> = {};
     const variableLabels: string[] = [];
-    uniqueVars.forEach((v, i) => {
-      const num = v.replace(/[{}]/g, '');
-      variableSamples[num] = `Sample ${i + 1}`;
+    varNums.forEach((num) => {
+      variableSamples[num] = samples[num].trim();
       variableLabels.push(`Variable ${num}`);
     });
     const spec = {
@@ -405,7 +412,35 @@ function CustomTemplateForm({ onClose, onCreated }: { onClose: () => void; onCre
             Body must NOT start or end with a variable. Keep it factual (UTILITY category) to pass Meta approval.
           </div>
         </div>
-        <button onClick={save} disabled={saving || !!validationError} className="btn-primary">
+
+        {varNums.length > 0 && (
+          <div>
+            <label className="label">Sample values (required by Meta)</label>
+            <p className="hint mb-2">
+              Give a realistic example for each variable. WhatsApp and Meta use these to review your template, and will reject it without them.
+            </p>
+            <div className="space-y-2">
+              {varNums.map((num) => (
+                <div key={num} className="flex items-center gap-2">
+                  <span className="font-mono text-[12px] text-text-tertiary w-10 shrink-0">{`{{${num}}}`}</span>
+                  <input
+                    className="input flex-1 text-[12px]"
+                    value={samples[num] || ''}
+                    onChange={(e) => setSamples((prev) => ({ ...prev, [num]: e.target.value }))}
+                    placeholder={`Example value for variable ${num}`}
+                  />
+                </div>
+              ))}
+            </div>
+            {missingSamples.length > 0 && (
+              <div className="mt-1.5 text-[11px] text-warning flex items-center gap-1">
+                <AlertTriangle size={11} /> Please fill a sample for every variable before creating.
+              </div>
+            )}
+          </div>
+        )}
+
+        <button onClick={save} disabled={saving || !!validationError || missingSamples.length > 0} className="btn-primary">
           {saving ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
           Create template
         </button>

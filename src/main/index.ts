@@ -13,6 +13,7 @@ import { registerAcceptanceHandlers } from './ipc/acceptance';
 import { registerWhatsAppHandlers } from './ipc/whatsapp';
 import { startScheduler } from './services/scheduler';
 import { findMissedRuns, runMissed } from './services/catchup';
+import { setupAutoUpdater } from './services/updater';
 
 const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_RENDERER_URL;
 
@@ -253,6 +254,7 @@ if (!gotLock) {
 
     createWindow();
     createTray();
+    if (mainWindow && !isDev) setupAutoUpdater(mainWindow);
 
     app.on('activate', () => {
       if (BrowserWindow.getAllWindows().length === 0) createWindow();

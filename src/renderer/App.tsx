@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle, DollarSign, Info,
+  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle, DollarSign, Info, Download,
 } from 'lucide-react';
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
 import { Disclaimer } from './components/Disclaimer';
 import { MissedRunsBanner } from './components/MissedRunsBanner';
+import { UpdateBanner } from './components/UpdateBanner';
 import { AboutModal } from './components/AboutModal';
 import { Logo } from './components/Logo';
 import { ExtLink } from './components/ExtLink';
@@ -97,13 +98,25 @@ export function App() {
               <Info size={15} strokeWidth={1.75} />
               <span>About</span>
             </button>
+            <button
+              onClick={async () => {
+                const r = await window.api.update.check();
+                if (r.ok && !r.version) alert('You are on the latest version.');
+                else if (!r.ok) alert('Could not check for updates right now. Please try again later.');
+                // if r.version exists, the update banner will appear automatically
+              }}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-win text-[13px] text-text-primary dark:text-text-primary-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle transition-colors"
+            >
+              <Download size={15} strokeWidth={1.75} />
+              <span>Check for updates</span>
+            </button>
           </div>
         </nav>
 
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v0.9.0</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v1.0.0</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"
@@ -124,6 +137,7 @@ export function App() {
           <span className="text-[13px] font-medium text-text-primary dark:text-text-primary-dark">{pageTitle}</span>
         </div>
         <div className="flex-1 overflow-auto">
+          <UpdateBanner />
           <MissedRunsBanner />
           <Outlet />
         </div>

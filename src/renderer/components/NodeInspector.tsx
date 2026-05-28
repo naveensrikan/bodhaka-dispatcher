@@ -17,7 +17,7 @@ const NODE_INTROS: Record<string, string> = {
   generateQuiz: 'This creates quiz questions from your material, so you can test yourself. Pick how many questions you want.',
   ifElse: 'This checks a condition and only continues if it is true. Use it to make your agent smart, e.g. only email you if something important is found.',
   delay: 'This makes the agent pause for a set time before continuing. Useful for spacing things out.',
-  rememberThis: 'This saves information so your agent can recall it next time it runs, like remembering what you studied yesterday. Give it a short name, then read it back later by typing {{memory.thatname}}.',
+  rememberThis: 'This saves information so your agent can recall it next time it runs, like remembering what you studied yesterday. Give it a short name, then read it back later by typing {{memory.thatname}}. Each agent keeps its 10 most recent memories. Older ones drop off automatically.',
   sendEmail: 'This sends the result to an email address. Great for daily summaries or quizzes you want in your inbox.',
   sendWhatsApp: 'This sends the result to a WhatsApp number. You can send a quick message or use an approved template.',
   saveToFile: 'This saves the result as a file on your computer, in your Documents folder. Good for keeping notes or reports.',
@@ -250,7 +250,7 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
           <div>
             <label className="label">Memory key</label>
             <input className="input w-full" value={data.key || 'last'} onChange={(e) => update({ key: e.target.value })} placeholder="e.g. last_session" />
-            <p className="hint">Give this saved note a short name (like "last") so the agent can find it again later. Read it back in a later block by typing <span className="font-mono">{`{{memory.${data.key || 'last'}}}`}</span>.</p>
+            <p className="hint">Give this saved note a short name (like "last") so the agent can find it again later. Read it back in a later block by typing <span className="font-mono">{`{{memory.${data.key || 'last'}}}`}</span>. This agent keeps only its 10 most recent memories, so older ones are removed automatically.</p>
 
             {memoryKeys.includes(data.key || 'last') && (
               <div className="mt-2 p-2.5 rounded-win bg-warning/10 border border-warning/30 text-[11px] text-text-secondary dark:text-text-secondary-dark">

@@ -71,7 +71,7 @@ export function registerAgentHandlers() {
     if (!row) return [];
     try {
       const mem = JSON.parse(row.value);
-      return Object.keys(mem);
+      return Object.keys(mem).filter((k) => k !== '__order');
     } catch {
       return [];
     }
