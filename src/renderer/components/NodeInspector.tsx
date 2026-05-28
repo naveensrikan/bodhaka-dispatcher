@@ -4,6 +4,25 @@ import { X, AlertTriangle, CheckCircle2, Clock as ClockIcon } from 'lucide-react
 import { NODE_META } from './FlowNode';
 import { CronBuilder } from './CronBuilder';
 
+// Friendly, plain-language explanations of each block, written for students
+const NODE_INTROS: Record<string, string> = {
+  manualTrigger: 'This block starts your agent when you press the Run button. Use it for agents you want to run yourself, whenever you like.',
+  scheduleTrigger: 'This block starts your agent automatically on a schedule — like every morning at 7am, or every Sunday evening. Set the timing below.',
+  knowledgeBase: 'This pulls in your uploaded study material so the AI can read it. Pick which documents to use, and whether you want the whole thing or just one topic.',
+  webSearch: 'This searches the internet for fresh information on a topic. Useful when you want up-to-date facts the AI might not already know.',
+  userInput: 'This lets you type in some text that gets passed to the next block — like a question, a topic, or anything you want the agent to work with.',
+  llmPrompt: 'This is the AI brain. It takes whatever comes in, follows your instructions, and writes a response. Tell it what role to play and what to do.',
+  summarize: 'This takes long text and shortens it into the style you choose — bullet points, flashcards, or a short paragraph.',
+  generateQuiz: 'This creates quiz questions from your material, so you can test yourself. Pick how many questions you want.',
+  ifElse: 'This checks a condition and only continues if it is true. Use it to make your agent smart — e.g. only email you if something important is found.',
+  delay: 'This makes the agent pause for a set time before continuing. Useful for spacing things out.',
+  rememberThis: 'This saves information so your agent can recall it next time it runs — like remembering what you studied yesterday.',
+  sendEmail: 'This sends the result to an email address. Great for daily summaries or quizzes you want in your inbox.',
+  sendWhatsApp: 'This sends the result to a WhatsApp number. You can send a quick message or use an approved template.',
+  saveToFile: 'This saves the result as a file on your computer, in your Documents folder. Good for keeping notes or reports.',
+  displayResult: 'This simply shows the result on screen when the agent runs. The simplest way to see what your agent produced.',
+};
+
 interface NodeInspectorProps {
   node: any;
   onChange: (id: string, patch: Record<string, any>) => void;
@@ -39,9 +58,15 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-3.5">
+        {NODE_INTROS[node.type] && (
+          <div className="p-2.5 rounded-win bg-brand-subtle dark:bg-brand-subtle-dark border border-brand/20 text-[11px] text-text-secondary dark:text-text-secondary-dark leading-relaxed">
+            {NODE_INTROS[node.type]}
+          </div>
+        )}
         <div>
           <label className="label">Label</label>
           <input className="input w-full" value={data.label || ''} onChange={(e) => update({ label: e.target.value })} placeholder={meta.label} />
+          <p className="hint">A friendly name for this block, so you can recognize it on the canvas.</p>
         </div>
 
         {node.type === 'scheduleTrigger' && (
@@ -56,8 +81,9 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
 
         {node.type === 'userInput' && (
           <div>
-            <label className="label">Value</label>
-            <textarea className="input w-full min-h-[100px] resize-none" value={data.value || ''} onChange={(e) => update({ value: e.target.value })} placeholder="Static text or starting prompt" />
+            <label className="label">Text</label>
+            <textarea className="input w-full min-h-[100px] resize-none" value={data.value || ''} onChange={(e) => update({ value: e.target.value })} placeholder="Type anything here — a question, a topic, or instructions" />
+            <p className="hint">Whatever you type here gets sent to the next block. For example, type a topic like "the water cycle" and connect this to an AI block to explain it.</p>
           </div>
         )}
 
@@ -145,24 +171,27 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
         {node.type === 'llmPrompt' && (
           <>
             <div>
-              <label className="label">System Prompt</label>
-              <textarea className="input w-full min-h-[60px] resize-none text-[12px]" value={data.system || ''} onChange={(e) => update({ system: e.target.value })} placeholder="You are a helpful tutor..." />
+              <label className="label">Role (System Prompt)</label>
+              <textarea className="input w-full min-h-[60px] resize-none text-[12px]" value={data.system || ''} onChange={(e) => update({ system: e.target.value })} placeholder="You are a friendly tutor who explains things simply..." />
+              <p className="hint">Tell the AI who to be and how to behave. Like casting an actor in a role — "You are a patient maths tutor" makes it answer like one.</p>
             </div>
             <div>
-              <label className="label">User Prompt</label>
-              <textarea className="input w-full min-h-[100px] resize-none text-[12px]" value={data.prompt || ''} onChange={(e) => update({ prompt: e.target.value })} placeholder="Use {{input}} to insert upstream content" />
-              <p className="text-[11px] text-text-tertiary mt-1.5">
-                <span className="font-mono">{'{{input}}'}</span> = upstream output · <span className="font-mono">{'{{memory}}'}</span> = agent memory
+              <label className="label">Instructions (User Prompt)</label>
+              <textarea className="input w-full min-h-[100px] resize-none text-[12px]" value={data.prompt || ''} onChange={(e) => update({ prompt: e.target.value })} placeholder="Explain this simply: {{input}}" />
+              <p className="hint">
+                The actual task you want done. Type <span className="font-mono">{'{{input}}'}</span> to drop in whatever the previous block produced, or <span className="font-mono">{'{{memory}}'}</span> to use what the agent remembered earlier.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="label">Temperature</label>
+                <label className="label">Creativity</label>
                 <input type="number" step="0.1" min="0" max="2" className="input w-full" value={data.temperature ?? 0.7} onChange={(e) => update({ temperature: parseFloat(e.target.value) })} />
+                <p className="hint">0 = focused & factual. 1 = more creative. Use low for facts, higher for stories.</p>
               </div>
               <div>
-                <label className="label">Max Tokens</label>
+                <label className="label">Max Length</label>
                 <input type="number" min="64" max="8000" className="input w-full" value={data.maxTokens ?? 1024} onChange={(e) => update({ maxTokens: parseInt(e.target.value) })} />
+                <p className="hint">Roughly how long the answer can be. 1024 is about 2-3 paragraphs.</p>
               </div>
             </div>
           </>

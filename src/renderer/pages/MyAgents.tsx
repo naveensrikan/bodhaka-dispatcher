@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Play, Trash2, Loader2, Clock, Sparkles, Upload, Copy as CopyIcon, Download } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { cronToHuman } from '../lib/cron';
 import type { Agent } from '../types/api';
 
 export function MyAgents() {
@@ -90,8 +91,8 @@ export function MyAgents() {
                   {a.description || `${a.definition?.nodes?.length || 0} blocks`}
                 </div>
                 {a.schedule && (
-                  <div className="text-[10px] font-mono text-text-tertiary mt-1.5 uppercase tracking-wider flex items-center gap-1">
-                    <Clock size={9} /> {a.schedule}
+                  <div className="text-[10px] text-text-tertiary mt-1.5 flex items-center gap-1">
+                    <Clock size={9} /> {cronToHuman(a.schedule)}
                   </div>
                 )}
               </Link>

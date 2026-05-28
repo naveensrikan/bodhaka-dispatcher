@@ -80,6 +80,12 @@ function createWindow() {
 }
 
 app.whenReady().then(async () => {
+  // Set the App User Model ID so Windows notifications show "Bodhaka Forge"
+  // instead of "electron.app.Bodhaka Forge"
+  if (process.platform === 'win32') {
+    app.setAppUserModelId('Bodhaka Forge');
+  }
+
   try {
     migrateLegacyData();
     await initDatabase();

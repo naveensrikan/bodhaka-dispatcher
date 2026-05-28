@@ -11,6 +11,8 @@ export interface ConfigShape {
     smtp?: boolean;
     twilio?: boolean;
   };
+  currency?: { code: string; symbol: string; rateFromUsd: number };
+  pricing?: Record<string, [number, number]>;
 }
 
 export interface Agent {

@@ -55,7 +55,16 @@ export function listProviderModels(provider: string): string[] {
 }
 
 function estimateCost(model: string, inTok: number, outTok: number): number {
-  const price = PRICING[model];
+  // Prefer user-configured pricing from config; fall back to built-in defaults
+  let price = PRICING[model];
+  try {
+    const db = getDb();
+    const row = db.prepare('SELECT value FROM config WHERE key = ?').get('pricing') as { value: string } | undefined;
+    if (row) {
+      const userPricing = JSON.parse(row.value);
+      if (userPricing[model]) price = userPricing[model];
+    }
+  } catch { /* use default */ }
   if (!price) return 0;
   return (inTok / 1000) * price[0] + (outTok / 1000) * price[1];
 }

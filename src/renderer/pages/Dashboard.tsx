@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bot, Plus, Activity, BookOpen, Zap, Sparkles, ChevronRight, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react';
+import { cronToHuman } from '../lib/cron';
 import type { Agent, ConfigShape, Stats } from '../types/api';
 
 export function Dashboard() {
@@ -19,6 +20,17 @@ export function Dashboard() {
   const llmReady = !!config?.llm?.apiKey || config?.llm?.provider === 'ollama';
   const smtpReady = !!config?.smtp?.host;
   const enabledAgents = agents.filter((a) => a.enabled).length;
+
+  const currency = config?.currency || { code: 'USD', symbol: '$', rateFromUsd: 1 };
+  const hasLocalCurrency = currency.code !== 'USD' && currency.rateFromUsd && currency.rateFromUsd !== 1;
+  const [showLocal, setShowLocal] = useState(false);
+
+  function fmtCost(usd: number): string {
+    if (showLocal && hasLocalCurrency) {
+      return `${currency.symbol}${(usd * currency.rateFromUsd).toFixed(2)}`;
+    }
+    return `$${usd.toFixed(3)}`;
+  }
 
   const setupSteps = [
     { done: !!config?.profile?.name, label: 'Add your profile', to: '/configuration' },
@@ -52,9 +64,17 @@ export function Dashboard() {
           sub={`${recentRuns.filter((r) => r.status === 'success').length} successful`}
         />
         <StatCard
-          icon={<DollarSign size={16} />} label="Cost (7d)"
-          value={`$${(stats?.last7Days?.cost || 0).toFixed(3)}`}
-          sub={`$${(stats?.totalCost || 0).toFixed(3)} all time`}
+          icon={<DollarSign size={16} />} label={`Cost (7d)`}
+          value={fmtCost(stats?.last7Days?.cost || 0)}
+          sub={`${fmtCost(stats?.totalCost || 0)} all time`}
+          action={hasLocalCurrency ? (
+            <button
+              onClick={() => setShowLocal((s) => !s)}
+              className="text-[10px] text-brand hover:underline mt-1"
+            >
+              Show in {showLocal ? 'USD' : currency.code}
+            </button>
+          ) : undefined}
         />
       </div>
 
@@ -136,7 +156,7 @@ export function Dashboard() {
                   {a.description || `${a.definition?.nodes?.length || 0} blocks`}
                 </div>
                 {a.schedule && (
-                  <div className="mt-3 text-[10px] font-mono text-text-tertiary uppercase tracking-wider">{a.schedule}</div>
+                  <div className="mt-3 text-[10px] text-text-tertiary">{cronToHuman(a.schedule)}</div>
                 )}
               </Link>
             ))}
@@ -147,7 +167,7 @@ export function Dashboard() {
   );
 }
 
-function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: string; value: string; sub: string }) {
+function StatCard({ icon, label, value, sub, action }: { icon: React.ReactNode; label: string; value: string; sub: string; action?: React.ReactNode }) {
   return (
     <div className="card p-4">
       <div className="flex items-center gap-1.5 text-text-secondary dark:text-text-secondary-dark mb-2.5">
@@ -156,6 +176,7 @@ function StatCard({ icon, label, value, sub }: { icon: React.ReactNode; label: s
       </div>
       <div className="text-xl font-semibold mb-0.5 truncate">{value}</div>
       <div className="text-[11px] text-text-tertiary truncate">{sub}</div>
+      {action}
     </div>
   );
 }

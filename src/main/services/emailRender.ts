@@ -54,7 +54,6 @@ export async function renderEmailHtml(markdown: string, title = 'From Bodhaka Fo
 </head>
 <body>
 ${bodyHtml}
-<div class="footer">Sent by your agent on Bodhaka Forge · A product of BuoyantWave Learning Technologies LLP</div>
 </body>
 </html>`;
 }

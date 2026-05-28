@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Key, Mail, Send, Check, Loader2, Eye, EyeOff,
-  MessageCircle, Search as SearchIcon, Award,
+  MessageCircle, Search as SearchIcon, Award, Coins,
 } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { InfoTooltip } from '../components/InfoTooltip';
@@ -307,6 +307,44 @@ export function Configuration() {
         >
           <input type="password" className="input w-full" value={config.search.braveKey} onChange={(e) => update('search', { braveKey: e.target.value })} placeholder="BSA..." />
         </Field>
+      </Section>
+
+      <Section icon={<Coins size={15} />} title="Currency (for cost display)">
+        <p className="text-[12px] text-text-secondary -mt-1 mb-2">
+          Model prices are in USD. Set your local currency and the conversion rate to see costs in your money on the Dashboard.
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          <Field label="Currency code">
+            <input
+              className="input w-full"
+              value={config.currency?.code || 'USD'}
+              onChange={(e) => update('currency', { code: e.target.value.toUpperCase().slice(0, 3) } as any)}
+              placeholder="INR"
+            />
+          </Field>
+          <Field label="Symbol">
+            <input
+              className="input w-full"
+              value={config.currency?.symbol || '$'}
+              onChange={(e) => update('currency', { symbol: e.target.value.slice(0, 3) } as any)}
+              placeholder="₹"
+            />
+          </Field>
+          <Field label="Rate per $1 USD">
+            <input
+              type="number" step="0.01" className="input w-full"
+              value={config.currency?.rateFromUsd ?? 1}
+              onChange={(e) => update('currency', { rateFromUsd: parseFloat(e.target.value) || 1 } as any)}
+              placeholder="83"
+            />
+          </Field>
+        </div>
+        <p className="hint">
+          Check today's rate at{' '}
+          <ExtLink href="https://www.google.com/search?q=usd+to+inr" showIcon>Google currency converter</ExtLink>
+          {' '}or{' '}
+          <ExtLink href="https://www.xe.com/currencyconverter/" showIcon>xe.com</ExtLink>, then type how many units of your currency equal $1 (e.g. 83 for INR).
+        </p>
       </Section>
 
       <div className="sticky bottom-0 -mx-8 px-8 py-3 bg-bg-base/95 dark:bg-bg-dark/95 backdrop-blur border-t border-border dark:border-border-dark flex justify-end gap-2">

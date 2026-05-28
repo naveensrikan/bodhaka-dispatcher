@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Sparkles, Clock, ArrowRight } from 'lucide-react';
 import { useToast } from '../components/Toast';
+import { cronToHuman } from '../lib/cron';
 import type { TemplateInfo } from '../types/api';
 
 const CATEGORY_LABEL: Record<string, string> = {
@@ -70,7 +71,7 @@ export function Templates() {
             <div className="flex items-center justify-between gap-2">
               {t.schedule ? (
                 <div className="text-[10px] font-mono text-text-tertiary flex items-center gap-1 uppercase tracking-wider">
-                  <Clock size={10} /> {t.schedule}
+                  <Clock size={10} /> {cronToHuman(t.schedule)}
                 </div>
               ) : (
                 <div className="text-[10px] text-text-tertiary uppercase tracking-wider">Manual run</div>

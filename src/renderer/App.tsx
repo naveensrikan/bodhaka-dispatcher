@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle,
+  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle, DollarSign,
 } from 'lucide-react';
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
@@ -15,6 +15,7 @@ const navItems = [
   { to: '/templates',          icon: Sparkles,        label: 'Agent Templates' },
   { to: '/knowledge',          icon: Library,         label: 'Knowledge Base' },
   { to: '/whatsapp-templates', icon: MessageCircle,   label: 'WhatsApp Templates' },
+  { to: '/pricing',            icon: DollarSign,      label: 'Model Pricing' },
   { to: '/history',            icon: History,         label: 'Run History' },
   { to: '/configuration',      icon: Settings,        label: 'Settings' },
 ];
@@ -92,7 +93,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v0.6.0</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v0.6.1</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"

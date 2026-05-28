@@ -80,6 +80,10 @@
     @apply text-xs text-text-secondary dark:text-text-secondary-dark font-medium mb-1.5 flex items-center gap-1.5;
   }
 
+  .hint {
+    @apply mt-1 text-[11px] text-text-tertiary leading-relaxed;
+  }
+
   .chip {
     @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs
            bg-brand-subtle dark:bg-brand-subtle-dark text-brand dark:text-brand-light
