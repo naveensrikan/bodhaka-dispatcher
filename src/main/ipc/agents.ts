@@ -64,6 +64,19 @@ export function registerAgentHandlers() {
 
   ipcMain.handle('agents:runNow', async (_event, id: string) => await executeAgent(id));
 
+  // Return the saved memory keys for an agent (for the {{memory.key}} autocomplete)
+  ipcMain.handle('agents:memoryKeys', (_event, id: string) => {
+    const db = getDb();
+    const row = db.prepare('SELECT value FROM agent_memory WHERE agent_id = ?').get(id) as { value: string } | undefined;
+    if (!row) return [];
+    try {
+      const mem = JSON.parse(row.value);
+      return Object.keys(mem);
+    } catch {
+      return [];
+    }
+  });
+
   ipcMain.handle('agents:getRuns', (_event, id: string) => {
     const db = getDb();
     return db.prepare('SELECT * FROM agent_runs WHERE agent_id = ? ORDER BY started_at DESC LIMIT 100').all(id);

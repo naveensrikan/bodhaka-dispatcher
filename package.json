@@ -1,6 +1,6 @@
 {
   "name": "bodhaka-forge",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "description": "Bodhaka Forge — Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
   "main": "dist/main/index.js",
   "author": "BuoyantWave Learning Technologies LLP",
@@ -78,6 +78,10 @@
       {
         "from": "resources/logo.png",
         "to": "logo.png"
+      },
+      {
+        "from": "resources/email-logo.png",
+        "to": "email-logo.png"
       }
     ],
     "asarUnpack": [

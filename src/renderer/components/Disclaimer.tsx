@@ -80,7 +80,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           </section>
 
           <section>
-            <h3 className="font-semibold text-brand mb-1.5">3. Strictly Personal Use — No Bulk Messaging</h3>
+            <h3 className="font-semibold text-brand mb-1.5">3. Strictly Personal Use, No Bulk Messaging</h3>
             <p>
               Bodhaka Forge is a <strong>personal-use-only application intended solely for your own learning and education</strong>.
               You agree that you will <strong>NOT</strong> use the Software, or any agent built with it, to send bulk, automated,
@@ -159,7 +159,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           <section>
             <h3 className="font-semibold text-brand mb-1.5">10. Data Storage & Record of Acceptance</h3>
             <p>
-              All your data — settings, API keys, uploaded documents, agents, and run history — is stored
+              All your data, settings, API keys, uploaded documents, agents, and run history, is stored
               <strong> only on your local device</strong>. The Company does not collect or transmit your usage data.
             </p>
             <p className="mt-1.5">
@@ -227,7 +227,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
               className="btn-secondary flex-1"
               disabled={accepting}
             >
-              I do not agree — Exit
+              I do not agree. Exit
             </button>
             <button
               onClick={accept}

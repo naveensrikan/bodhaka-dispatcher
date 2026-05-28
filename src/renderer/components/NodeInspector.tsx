@@ -3,20 +3,21 @@ import { Link as LinkComp } from 'react-router-dom';
 import { X, AlertTriangle, CheckCircle2, Clock as ClockIcon } from 'lucide-react';
 import { NODE_META } from './FlowNode';
 import { CronBuilder } from './CronBuilder';
+import { MemoryPromptField } from './MemoryPromptField';
 
 // Friendly, plain-language explanations of each block, written for students
 const NODE_INTROS: Record<string, string> = {
   manualTrigger: 'This block starts your agent when you press the Run button. Use it for agents you want to run yourself, whenever you like.',
-  scheduleTrigger: 'This block starts your agent automatically on a schedule — like every morning at 7am, or every Sunday evening. Set the timing below.',
+  scheduleTrigger: 'This block starts your agent automatically on a schedule, like every morning at 7am, or every Sunday evening. Set the timing below.',
   knowledgeBase: 'This pulls in your uploaded study material so the AI can read it. Pick which documents to use, and whether you want the whole thing or just one topic.',
   webSearch: 'This searches the internet for fresh information on a topic. Useful when you want up-to-date facts the AI might not already know.',
-  userInput: 'This lets you type in some text that gets passed to the next block — like a question, a topic, or anything you want the agent to work with.',
+  userInput: 'This lets you type in some text that gets passed to the next block, like a question, a topic, or anything you want the agent to work with.',
   llmPrompt: 'This is the AI brain. It takes whatever comes in, follows your instructions, and writes a response. Tell it what role to play and what to do.',
-  summarize: 'This takes long text and shortens it into the style you choose — bullet points, flashcards, or a short paragraph.',
+  summarize: 'This takes long text and shortens it into the style you choose, bullet points, flashcards, or a short paragraph.',
   generateQuiz: 'This creates quiz questions from your material, so you can test yourself. Pick how many questions you want.',
-  ifElse: 'This checks a condition and only continues if it is true. Use it to make your agent smart — e.g. only email you if something important is found.',
+  ifElse: 'This checks a condition and only continues if it is true. Use it to make your agent smart, e.g. only email you if something important is found.',
   delay: 'This makes the agent pause for a set time before continuing. Useful for spacing things out.',
-  rememberThis: 'This saves information so your agent can recall it next time it runs — like remembering what you studied yesterday.',
+  rememberThis: 'This saves information so your agent can recall it next time it runs, like remembering what you studied yesterday. Give it a short name, then read it back later by typing {{memory.thatname}}.',
   sendEmail: 'This sends the result to an email address. Great for daily summaries or quizzes you want in your inbox.',
   sendWhatsApp: 'This sends the result to a WhatsApp number. You can send a quick message or use an approved template.',
   saveToFile: 'This saves the result as a file on your computer, in your Documents folder. Good for keeping notes or reports.',
@@ -25,6 +26,7 @@ const NODE_INTROS: Record<string, string> = {
 
 interface NodeInspectorProps {
   node: any;
+  agentId?: string;
   onChange: (id: string, patch: Record<string, any>) => void;
   onClose: () => void;
   knowledgeDocs: any[];
@@ -32,10 +34,17 @@ interface NodeInspectorProps {
   defaultWhatsApp?: string;
 }
 
-export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultEmail, defaultWhatsApp }: NodeInspectorProps) {
+export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs, defaultEmail, defaultWhatsApp }: NodeInspectorProps) {
   const [data, setData] = useState<Record<string, any>>(node.data || {});
+  const [memoryKeys, setMemoryKeys] = useState<string[]>([]);
 
   useEffect(() => { setData(node.data || {}); }, [node.id]);
+
+  useEffect(() => {
+    if (agentId && agentId !== 'new') {
+      window.api.agents.memoryKeys(agentId).then((keys) => setMemoryKeys(keys || [])).catch(() => setMemoryKeys([]));
+    }
+  }, [agentId, node.id]);
 
   function update(patch: Record<string, any>) {
     const next = { ...data, ...patch };
@@ -82,7 +91,7 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
         {node.type === 'userInput' && (
           <div>
             <label className="label">Text</label>
-            <textarea className="input w-full min-h-[100px] resize-none" value={data.value || ''} onChange={(e) => update({ value: e.target.value })} placeholder="Type anything here — a question, a topic, or instructions" />
+            <textarea className="input w-full min-h-[100px] resize-none" value={data.value || ''} onChange={(e) => update({ value: e.target.value })} placeholder="Type anything here, a question, a topic, or instructions" />
             <p className="hint">Whatever you type here gets sent to the next block. For example, type a topic like "the water cycle" and connect this to an AI block to explain it.</p>
           </div>
         )}
@@ -173,13 +182,17 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
             <div>
               <label className="label">Role (System Prompt)</label>
               <textarea className="input w-full min-h-[60px] resize-none text-[12px]" value={data.system || ''} onChange={(e) => update({ system: e.target.value })} placeholder="You are a friendly tutor who explains things simply..." />
-              <p className="hint">Tell the AI who to be and how to behave. Like casting an actor in a role — "You are a patient maths tutor" makes it answer like one.</p>
+              <p className="hint">Tell the AI who to be and how to behave. Like casting an actor in a role, "You are a patient maths tutor" makes it answer like one.</p>
             </div>
             <div>
               <label className="label">Instructions (User Prompt)</label>
-              <textarea className="input w-full min-h-[100px] resize-none text-[12px]" value={data.prompt || ''} onChange={(e) => update({ prompt: e.target.value })} placeholder="Explain this simply: {{input}}" />
+              <MemoryPromptField
+                value={data.prompt || ''}
+                onChange={(v) => update({ prompt: v })}
+                memoryKeys={memoryKeys}
+              />
               <p className="hint">
-                The actual task you want done. Type <span className="font-mono">{'{{input}}'}</span> to drop in whatever the previous block produced, or <span className="font-mono">{'{{memory}}'}</span> to use what the agent remembered earlier.
+                The actual task you want done. Type <span className="font-mono">{'{{input}}'}</span> to drop in whatever the previous block produced. Type <span className="font-mono">{'{{memory.'}</span> to pick something the agent saved earlier.
               </p>
             </div>
             <div className="grid grid-cols-2 gap-2">
@@ -237,7 +250,36 @@ export function NodeInspector({ node, onChange, onClose, knowledgeDocs, defaultE
           <div>
             <label className="label">Memory key</label>
             <input className="input w-full" value={data.key || 'last'} onChange={(e) => update({ key: e.target.value })} placeholder="e.g. last_session" />
-            <p className="text-[11px] text-text-tertiary mt-1.5">Stores the upstream content under this key. Later runs can read it via <span className="font-mono">{'{{memory}}'}</span>.</p>
+            <p className="hint">Give this saved note a short name (like "last") so the agent can find it again later. Read it back in a later block by typing <span className="font-mono">{`{{memory.${data.key || 'last'}}}`}</span>.</p>
+
+            {memoryKeys.includes(data.key || 'last') && (
+              <div className="mt-2 p-2.5 rounded-win bg-warning/10 border border-warning/30 text-[11px] text-text-secondary dark:text-text-secondary-dark">
+                <AlertTriangle size={12} className="inline mr-1 text-warning" />
+                A memory called <span className="font-mono">{data.key || 'last'}</span> already exists for this agent. Running this will overwrite its current contents.
+                {(() => {
+                  // suggest a fresh unused key
+                  const base = (data.key || 'last').replace(/\d+$/, '');
+                  let n = 2;
+                  let suggestion = `${base}${n}`;
+                  while (memoryKeys.includes(suggestion)) { n++; suggestion = `${base}${n}`; }
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => update({ key: suggestion })}
+                      className="ml-1 text-brand hover:underline font-medium"
+                    >
+                      Use "{suggestion}" instead
+                    </button>
+                  );
+                })()}
+              </div>
+            )}
+
+            {memoryKeys.length > 0 && (
+              <p className="hint mt-1.5">
+                This agent currently remembers: {memoryKeys.map((k) => <span key={k} className="font-mono mr-1.5">{k}</span>)}
+              </p>
+            )}
           </div>
         )}
 
@@ -354,7 +396,7 @@ function WhatsAppNodeFields({
                 value={data.templateName || ''}
                 onChange={(e) => update({ templateName: e.target.value || undefined })}
               >
-                <option value="">— Sandbox freeform (no template) —</option>
+                <option value="">,  Sandbox freeform (no template) , </option>
                 {approvedTemplates.map((t) => (
                   <option key={t.name} value={t.name}>
                     ✓ {t.displayName}

@@ -71,7 +71,7 @@ export function CronBuilder({ value, onChange }: CronBuilderProps) {
       {/* Human-readable preview */}
       <div className="flex items-center gap-2 p-2.5 rounded-win bg-brand-subtle dark:bg-brand-subtle-dark border border-brand/20">
         <span className="text-[12px] text-brand dark:text-brand-light font-medium">
-          {value ? cronToHuman(value) : 'No schedule set — runs only when triggered manually'}
+          {value ? cronToHuman(value) : 'No schedule set, runs only when triggered manually'}
         </span>
         {value && (
           <span className="ml-auto text-[10px] font-mono text-text-tertiary">{value}</span>

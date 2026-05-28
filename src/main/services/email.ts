@@ -22,12 +22,19 @@ function getTransporter() {
   };
 }
 
-export async function sendEmail(to: string, subject: string, body: string, isHtml = false) {
+export async function sendEmail(
+  to: string,
+  subject: string,
+  body: string,
+  isHtml = false,
+  attachments?: { filename: string; path: string; cid: string }[],
+) {
   const { transporter, cfg } = getTransporter();
   const info = await transporter.sendMail({
     from: cfg.from || cfg.user,
     to, subject,
     [isHtml ? 'html' : 'text']: body,
+    ...(attachments && attachments.length ? { attachments } : {}),
   });
   return { messageId: info.messageId };
 }

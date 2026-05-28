@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage, powerMonitor, Notification } from 'electron';
+import { app, BrowserWindow, shell, ipcMain, Tray, Menu, nativeImage, powerMonitor, Notification, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { initDatabase, getDb } from './db/database';
@@ -19,6 +19,7 @@ const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_R
 let mainWindow: BrowserWindow | null = null;
 let tray: Tray | null = null;
 let isQuitting = false;
+let quitConfirmed = false;
 
 function getSchedulingPrefs() {
   try {
@@ -88,16 +89,48 @@ function createWindow() {
     if (!launchedHidden) mainWindow?.show();
   });
 
-  // Minimize to tray instead of quitting, if the pref is on
+  // Window close behaviour:
+  //  - If minimize-to-tray is on and this isn't an explicit Quit, just hide.
+  //  - Otherwise it's a real quit via the window X: confirm first.
   mainWindow.on('close', (e) => {
     const prefs = getSchedulingPrefs();
-    if (!isQuitting && prefs.minimizeToTray) {
+
+    // Already confirmed (e.g. via tray Quit) — allow close
+    if (quitConfirmed) return;
+
+    // Just hiding to tray — no confirmation needed
+    if (prefs.minimizeToTray) {
       e.preventDefault();
       mainWindow?.hide();
+      return;
+    }
+
+    // Real quit via the window X — confirm first
+    e.preventDefault();
+    if (confirmQuit()) {
+      quitConfirmed = true;
+      isQuitting = true;
+      app.quit();
     }
   });
 
   mainWindow.on('closed', () => { mainWindow = null; });
+}
+
+/** Show the "are you sure" dialog. Returns true if the user chose to close. */
+function confirmQuit(): boolean {
+  const win = mainWindow || BrowserWindow.getAllWindows()[0];
+  const opts = {
+    type: 'question' as const,
+    buttons: ['Cancel', 'Close anyway'],
+    defaultId: 0,
+    cancelId: 0,
+    title: 'Close Bodhaka Forge?',
+    message: 'Are you sure you want to close Bodhaka Forge?',
+    detail: 'Any unsaved changes (an open canvas or settings you have not saved) will be lost. Scheduled agents will not run while the app is fully closed.',
+  };
+  const choice = win ? dialog.showMessageBoxSync(win, opts) : dialog.showMessageBoxSync(opts);
+  return choice === 1;
 }
 
 function createTray() {
@@ -111,7 +144,13 @@ function createTray() {
     { label: 'Open Bodhaka Forge', click: () => { if (mainWindow) { mainWindow.show(); } else createWindow(); } },
     { label: 'Run due agents now', click: async () => { await doCatchUp(true); } },
     { type: 'separator' },
-    { label: 'Quit', click: () => { isQuitting = true; app.quit(); } },
+    { label: 'Quit', click: () => {
+      if (confirmQuit()) {
+        quitConfirmed = true;
+        isQuitting = true;
+        app.quit();
+      }
+    } },
   ]);
   tray.setContextMenu(menu);
   tray.on('double-click', () => { if (mainWindow) mainWindow.show(); else createWindow(); });

@@ -323,8 +323,8 @@ function CustomTemplateForm({ onClose, onCreated }: { onClose: () => void; onCre
   // Live validation
   const trimmed = body.trim();
   let validationError = '';
-  if (trimmed && /^\{\{/.test(trimmed)) validationError = 'Body cannot start with a variable — add text before {{1}}.';
-  else if (trimmed && /\}\}$/.test(trimmed)) validationError = 'Body cannot end with a variable — add text after the last variable.';
+  if (trimmed && /^\{\{/.test(trimmed)) validationError = 'Body cannot start with a variable, add text before {{1}}.';
+  else if (trimmed && /\}\}$/.test(trimmed)) validationError = 'Body cannot end with a variable, add text after the last variable.';
   else if (trimmed.length > 1024) validationError = 'Body exceeds 1024 characters.';
 
   async function save() {

@@ -249,6 +249,7 @@ function BuilderInner() {
         {selected && (
           <NodeInspector
             node={selected}
+            agentId={id}
             knowledgeDocs={knowledgeDocs}
             defaultEmail={defaultEmail}
             defaultWhatsApp={defaultWhatsApp}

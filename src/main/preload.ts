@@ -15,6 +15,7 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke('agents:delete', id),
     duplicate: (id: string) => ipcRenderer.invoke('agents:duplicate', id),
     runNow: (id: string) => ipcRenderer.invoke('agents:runNow', id),
+    memoryKeys: (id: string) => ipcRenderer.invoke('agents:memoryKeys', id),
     getRuns: (id: string) => ipcRenderer.invoke('agents:getRuns', id),
     getAllRuns: () => ipcRenderer.invoke('agents:getAllRuns'),
     export: (id: string) => ipcRenderer.invoke('agents:export', id),

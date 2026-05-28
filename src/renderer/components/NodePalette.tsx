@@ -2,11 +2,11 @@ import { NODE_TYPES_LIST } from './FlowNode';
 
 // Ordered steps with friendly explanations written for young students
 const CATEGORIES: { name: string; step: number; blurb: string }[] = [
-  { name: 'Trigger', step: 1, blurb: 'This comes first. It decides WHAT STARTS your agent — either you press Run, or it runs automatically on a schedule (like every morning).' },
-  { name: 'Source', step: 2, blurb: 'Next, give your agent something to work with — your study notes, a web search, or text you type in.' },
-  { name: 'AI', step: 3, blurb: 'This is the brain. The AI reads the source and does the thinking — summarizing, making a quiz, or explaining.' },
+  { name: 'Trigger', step: 1, blurb: 'This comes first. It decides what starts your agent. Either you press Run, or it runs automatically on a schedule like every morning.' },
+  { name: 'Source', step: 2, blurb: 'Next, give your agent something to work with, such as your study notes, a web search, or text you type in.' },
+  { name: 'AI', step: 3, blurb: 'This is the brain. The AI reads the source and does the thinking, like summarizing, making a quiz, or explaining.' },
   { name: 'Logic', step: 4, blurb: 'Optional helpers. Add a wait, make a decision, or let the agent remember things for next time.' },
-  { name: 'Output', step: 5, blurb: 'Last step. This decides HOW YOU RECEIVE the result — by email, WhatsApp, a saved file, or shown on screen.' },
+  { name: 'Output', step: 5, blurb: 'Last step. This decides how you receive the result, by email, WhatsApp, a saved file, or shown on screen.' },
 ];
 
 export function NodePalette() {

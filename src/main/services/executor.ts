@@ -36,6 +36,7 @@ interface RunContext {
   skipped: Set<string>;
   totalCost: number;
   memory: Record<string, any>;
+  interests: string[];
 }
 
 function log(ctx: RunContext, msg: string) {
@@ -43,6 +44,39 @@ function log(ctx: RunContext, msg: string) {
   ctx.logs.push(line);
   console.log(`[run ${ctx.runId.slice(0, 8)}] ${msg}`);
   broadcastRunUpdate({ runId: ctx.runId, type: 'log', message: line });
+}
+
+/**
+ * If the student listed hobbies/interests in their profile, return a short
+ * instruction so the model can relate examples and analogies to those interests.
+ * Returns an empty string when no interests are set, so default behaviour is unchanged.
+ */
+function interestsHint(ctx: RunContext): string {
+  if (!ctx.interests || ctx.interests.length === 0) return '';
+  const list = ctx.interests.join(', ');
+  return ` When it helps understanding, relate examples, analogies, or scenarios to the student's interests (${list}), but only where it fits naturally. Do not force it.`;
+}
+
+/**
+ * Replace memory tokens in a prompt.
+ *  {{memory.someKey}} → just that key's saved value (or empty if missing)
+ *  {{memory}}         → all saved memory as a readable list (backward compatible)
+ */
+function applyMemoryTokens(text: string, memory: Record<string, any>): string {
+  // First handle specific keys: {{memory.key}}
+  let out = text.replace(/\{\{memory\.([a-zA-Z0-9_]+)\}\}/g, (_m, key) => {
+    const val = memory[key];
+    if (val === undefined || val === null) return '';
+    return typeof val === 'string' ? val : JSON.stringify(val);
+  });
+  // Then the catch-all {{memory}} → readable "key: value" lines
+  if (out.includes('{{memory}}')) {
+    const all = Object.entries(memory)
+      .map(([k, v]) => `${k}: ${typeof v === 'string' ? v : JSON.stringify(v)}`)
+      .join('\n');
+    out = out.replaceAll('{{memory}}', all);
+  }
+  return out;
 }
 
 function topologicalOrder(def: AgentDefinition): FlowNode[] {
@@ -199,10 +233,13 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'llmPrompt': {
-      const prompt = (node.data.prompt || 'Summarize the input.').replaceAll('{{input}}', inputText)
-        .replaceAll('{{memory}}', JSON.stringify(ctx.memory));
+      const prompt = applyMemoryTokens(
+        (node.data.prompt || 'Summarize the input.').replaceAll('{{input}}', inputText),
+        ctx.memory,
+      );
+      const baseSystem = node.data.system || 'You are a helpful assistant for a student.';
       const result = await withRetry(() => callLLM({
-        system: node.data.system || 'You are a helpful assistant for a student.',
+        system: baseSystem + interestsHint(ctx),
         messages: [{ role: 'user', content: prompt }],
         maxTokens: node.data.maxTokens || 1024,
         temperature: node.data.temperature ?? 0.7,
@@ -214,7 +251,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
 
     case 'summarize': {
       const result = await withRetry(() => callLLM({
-        system: 'You are an expert at clear summarization.',
+        system: 'You are an expert at clear summarization.' + interestsHint(ctx),
         messages: [{ role: 'user', content: `Summarize the following in ${node.data.style || 'bullet points'}:\n\n${inputText}` }],
         maxTokens: 800,
       }), 3, ctx, 'LLM call');
@@ -225,7 +262,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     case 'generateQuiz': {
       const n = node.data.numQuestions || 5;
       const result = await withRetry(() => callLLM({
-        system: 'You generate clear, well-structured study quizzes.',
+        system: 'You generate clear, well-structured study quizzes.' + interestsHint(ctx),
         messages: [{ role: 'user', content: `Generate ${n} quiz questions (with answers at the end) from this material:\n\n${inputText}` }],
         maxTokens: 1500,
       }), 3, ctx, 'LLM call');
@@ -322,6 +359,17 @@ export async function executeAgent(agentId: string): Promise<{ runId: string; st
 
   const def: AgentDefinition = JSON.parse(agent.definition);
   const runId = randomUUID();
+
+  // Load the student's hobbies/interests so generated content can relate to them
+  let interests: string[] = [];
+  try {
+    const profileRow = db.prepare('SELECT value FROM config WHERE key = ?').get('profile') as { value: string } | undefined;
+    if (profileRow) {
+      const profile = JSON.parse(profileRow.value);
+      if (Array.isArray(profile.interests)) interests = profile.interests.filter((i: any) => typeof i === 'string' && i.trim());
+    }
+  } catch { /* no interests */ }
+
   const ctx: RunContext = {
     runId,
     agentId,
@@ -331,6 +379,7 @@ export async function executeAgent(agentId: string): Promise<{ runId: string; st
     skipped: new Set(),
     totalCost: 0,
     memory: loadMemory(agentId),
+    interests,
   };
 
   db.prepare(`INSERT INTO agent_runs (id, agent_id, status, started_at) VALUES (?, ?, ?, ?)`)

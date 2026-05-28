@@ -5,10 +5,9 @@ import { ExtLink } from '../components/ExtLink';
 import type { ConfigShape } from '../types/api';
 
 const PROVIDER_OF: Record<string, string> = {
-  'gpt-4o': 'OpenAI', 'gpt-4o-mini': 'OpenAI', 'gpt-4-turbo': 'OpenAI', 'gpt-3.5-turbo': 'OpenAI',
+  'gpt-4o': 'OpenAI', 'gpt-4o-mini': 'OpenAI', 'gpt-4.1': 'OpenAI', 'gpt-4.1-mini': 'OpenAI',
   'claude-opus-4-7': 'Anthropic', 'claude-sonnet-4-6': 'Anthropic', 'claude-haiku-4-5-20251001': 'Anthropic',
-  'claude-3-5-sonnet-latest': 'Anthropic', 'claude-3-5-haiku-latest': 'Anthropic',
-  'gemini-1.5-pro-latest': 'Google', 'gemini-1.5-flash-latest': 'Google', 'gemini-2.0-flash-exp': 'Google',
+  'gemini-1.5-pro-latest': 'Google', 'gemini-1.5-flash-latest': 'Google', 'gemini-2.0-flash': 'Google',
 };
 
 const PRICING_LINKS: Record<string, string> = {
@@ -19,11 +18,11 @@ const PRICING_LINKS: Record<string, string> = {
 
 const DEFAULT_PRICING: Record<string, [number, number]> = {
   'gpt-4o': [0.0025, 0.01], 'gpt-4o-mini': [0.00015, 0.0006],
-  'gpt-4-turbo': [0.01, 0.03], 'gpt-3.5-turbo': [0.0005, 0.0015],
+  'gpt-4.1': [0.002, 0.008], 'gpt-4.1-mini': [0.0004, 0.0016],
   'claude-opus-4-7': [0.015, 0.075], 'claude-sonnet-4-6': [0.003, 0.015],
-  'claude-haiku-4-5-20251001': [0.0008, 0.004], 'claude-3-5-sonnet-latest': [0.003, 0.015],
-  'claude-3-5-haiku-latest': [0.0008, 0.004], 'gemini-1.5-pro-latest': [0.00125, 0.005],
-  'gemini-1.5-flash-latest': [0.000075, 0.0003], 'gemini-2.0-flash-exp': [0, 0],
+  'claude-haiku-4-5-20251001': [0.001, 0.005],
+  'gemini-1.5-pro-latest': [0.00125, 0.005],
+  'gemini-1.5-flash-latest': [0.000075, 0.0003], 'gemini-2.0-flash': [0.0001, 0.0004],
 };
 
 export function Pricing() {
@@ -57,7 +56,7 @@ export function Pricing() {
 
   function resetDefaults() {
     setPricing({ ...DEFAULT_PRICING });
-    toast.show('Reset to defaults — remember to Save', 'info');
+    toast.show('Reset to defaults, remember to Save', 'info');
   }
 
   if (!config) return <div className="p-8 text-text-tertiary text-sm">Loading…</div>;
@@ -80,7 +79,7 @@ export function Pricing() {
           <h1 className="text-2xl font-semibold tracking-tight">Model Pricing</h1>
         </div>
         <p className="text-text-secondary dark:text-text-secondary-dark text-[13px]">
-          These rates are used to estimate how much each agent run costs. Providers change prices over time —
+          These rates are used to estimate how much each agent run costs. Providers change prices over time , 
           if a rate is out of date, update it here.
         </p>
       </header>
@@ -89,7 +88,7 @@ export function Pricing() {
         <div className="flex items-start gap-2 text-[12px] text-text-secondary dark:text-text-secondary-dark">
           <Info size={14} className="text-brand shrink-0 mt-0.5" />
           <div>
-            Prices are in <strong>USD per 1,000 tokens</strong> — one value for input (what you send) and one for
+            Prices are in <strong>USD per 1,000 tokens</strong>, one value for input (what you send) and one for
             output (what the AI writes back). A token is roughly ¾ of a word. Check the latest official prices:{' '}
             <ExtLink href="https://openai.com/api/pricing/" showIcon>OpenAI</ExtLink>,{' '}
             <ExtLink href="https://www.anthropic.com/pricing" showIcon>Anthropic</ExtLink>,{' '}

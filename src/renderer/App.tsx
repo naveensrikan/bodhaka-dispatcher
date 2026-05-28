@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle, DollarSign,
+  LayoutDashboard, Settings, Library, Bot, Sparkles, History, Sun, Moon, HelpCircle, MessageCircle, DollarSign, Info,
 } from 'lucide-react';
 import { cn } from './lib/cn';
 import { Onboarding } from './components/Onboarding';
 import { Disclaimer } from './components/Disclaimer';
 import { MissedRunsBanner } from './components/MissedRunsBanner';
+import { AboutModal } from './components/AboutModal';
 import { Logo } from './components/Logo';
 import { ExtLink } from './components/ExtLink';
 
@@ -25,6 +26,7 @@ export function App() {
   const location = useLocation();
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const [accepted, setAccepted] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     window.api.config.get().then((c) => {
@@ -88,13 +90,20 @@ export function App() {
               <HelpCircle size={15} strokeWidth={1.75} />
               <span>Help & Docs</span>
             </button>
+            <button
+              onClick={() => setShowAbout(true)}
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-win text-[13px] text-text-primary dark:text-text-primary-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle transition-colors"
+            >
+              <Info size={15} strokeWidth={1.75} />
+              <span>About</span>
+            </button>
           </div>
         </nav>
 
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v0.8.1</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v0.9.0</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"
@@ -119,6 +128,8 @@ export function App() {
           <Outlet />
         </div>
       </main>
+
+      {showAbout && <AboutModal onClose={() => setShowAbout(false)} />}
     </div>
   );
 }

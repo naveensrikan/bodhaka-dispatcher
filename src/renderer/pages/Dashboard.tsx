@@ -81,7 +81,7 @@ export function Dashboard() {
         <StatCard icon={<Bot size={16} />} label="Agents" value={String(agents.length)} sub={`${enabledAgents} enabled`} />
         <StatCard
           icon={<Activity size={16} />} label="Provider"
-          value={llmReady ? (config?.llm?.provider || '—') : 'Not set'}
+          value={llmReady ? (config?.llm?.provider || ', ') : 'Not set'}
           sub={llmReady ? config?.llm?.model?.split('-').slice(0,3).join('-') : 'Setup needed'}
         />
         <StatCard
@@ -141,7 +141,7 @@ export function Dashboard() {
             <div className="font-semibold text-sm group-hover:text-accent transition-colors">Start from a template</div>
           </div>
           <div className="text-[13px] text-text-secondary dark:text-text-secondary-dark">
-            12 ready-made agents — study, motivation, research, recreation.
+            12 ready-made agents, study, motivation, research, recreation.
           </div>
         </Link>
         <Link to="/agents/new" className="card p-5 hover:border-accent transition-colors group">

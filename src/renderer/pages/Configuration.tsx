@@ -245,7 +245,7 @@ export function Configuration() {
           />
           <span className="text-[12px] text-text-primary dark:text-text-primary-dark leading-relaxed">
             I confirm that the email address and phone number above are <strong>my own</strong>, and that I will use Bodhaka Forge
-            and any agents I build <strong>solely for my personal learning</strong> — not for sending bulk or unsolicited messages to others.
+            and any agents I build <strong>solely for my personal learning</strong>, not for sending bulk or unsolicited messages to others.
           </span>
         </label>
       </Section>
@@ -265,7 +265,7 @@ export function Configuration() {
               }}
             >
               {CURRENCIES.map((c) => (
-                <option key={c.code} value={c.code}>{c.code} — {c.name} ({c.symbol})</option>
+                <option key={c.code} value={c.code}>{c.code}, {c.name} ({c.symbol})</option>
               ))}
             </select>
           </Field>
@@ -348,14 +348,14 @@ export function Configuration() {
         <Field
           label="Tavily API Key"
           info={<InfoTooltip title={SETUP_STEPS.tavily.title} steps={SETUP_STEPS.tavily.steps} />}
-          hint={<ExtLink href="https://app.tavily.com/" showIcon>Get one — 1,000 free/month</ExtLink>}
+          hint={<ExtLink href="https://app.tavily.com/" showIcon>Get one, 1,000 free/month</ExtLink>}
         >
           <input type="password" className="input w-full" value={config.search.tavilyKey} onChange={(e) => update('search', { tavilyKey: e.target.value })} placeholder="tvly-..." />
         </Field>
         <Field
           label="Brave Search API Key"
           info={<InfoTooltip title={SETUP_STEPS.brave.title} steps={SETUP_STEPS.brave.steps} />}
-          hint={<>Alternative — <ExtLink href="https://api.search.brave.com/app/keys" showIcon>get one</ExtLink></>}
+          hint={<>Alternative, <ExtLink href="https://api.search.brave.com/app/keys" showIcon>get one</ExtLink></>}
         >
           <input type="password" className="input w-full" value={config.search.braveKey} onChange={(e) => update('search', { braveKey: e.target.value })} placeholder="BSA..." />
         </Field>
@@ -363,7 +363,7 @@ export function Configuration() {
 
       <Section icon={<Clock size={15} />} title="Scheduling & Background Running">
         <div className="p-3 mb-1 rounded-win bg-brand-subtle dark:bg-brand-subtle-dark border border-brand/20 text-[12px] text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-          <strong className="text-text-primary dark:text-text-primary-dark">How scheduling works:</strong> For scheduled agents to run, Bodhaka Forge must be running — either open, or minimized in the system tray. Turn on "Launch on startup" below so it's always ready whenever your PC is on. If it wasn't running at the scheduled time, it'll catch up when you next open it.
+          <strong className="text-text-primary dark:text-text-primary-dark">How scheduling works:</strong> For scheduled agents to run, Bodhaka Forge must be running, either open, or minimized in the system tray. Turn on "Launch on startup" below so it's always ready whenever your PC is on. If it wasn't running at the scheduled time, it'll catch up when you next open it.
         </div>
         <p className="text-[12px] text-text-secondary -mt-1 mb-2">
           These settings help it stay running and catch up on anything missed while your PC was off.
@@ -376,7 +376,7 @@ export function Configuration() {
             className="mt-0.5"
           />
           <span className="text-[12px] leading-relaxed">
-            <strong>Launch on startup</strong> — open automatically (minimized to the system tray) when you turn on your PC, so scheduled agents are always armed.
+            <strong>Launch on startup</strong>, open automatically (minimized to the system tray) when you turn on your PC, so scheduled agents are always armed.
           </span>
         </label>
         <label className="flex items-start gap-2.5 cursor-pointer">
@@ -387,7 +387,7 @@ export function Configuration() {
             className="mt-0.5"
           />
           <span className="text-[12px] leading-relaxed">
-            <strong>Keep running in the tray when I close the window</strong> — closing the window hides it to the tray instead of quitting. (Quit anytime from the tray icon.)
+            <strong>Keep running in the tray when I close the window</strong>, closing the window hides it to the tray instead of quitting. (Quit anytime from the tray icon.)
           </span>
         </label>
 
@@ -397,7 +397,7 @@ export function Configuration() {
             value={config.scheduling?.catchUpMode || 'ask'}
             onChange={(e) => update('scheduling', { catchUpMode: e.target.value } as any)}
           >
-            <option value="ask">Ask me — show missed agents with Run / Dismiss options</option>
+            <option value="ask">Ask me, show missed agents with Run / Dismiss options</option>
             <option value="auto">Run them automatically</option>
           </select>
         </Field>
@@ -408,12 +408,12 @@ export function Configuration() {
             value={config.scheduling?.missedPolicy || 'recent'}
             onChange={(e) => update('scheduling', { missedPolicy: e.target.value } as any)}
           >
-            <option value="recent">Just once — only the most recent missed run (recommended)</option>
-            <option value="all">All missed runs (up to 5) — e.g. catch every missed quiz</option>
-            <option value="skip">Skip missed runs — only run on schedule going forward</option>
+            <option value="recent">Just once, only the most recent missed run (recommended)</option>
+            <option value="all">All missed runs (up to 5), e.g. catch every missed quiz</option>
+            <option value="skip">Skip missed runs, only run on schedule going forward</option>
           </select>
           <p className="hint">
-            "Just once" means if your PC was off for 3 days, you get <strong>one</strong> fresh morning boost when you return — not three stale ones piled up.
+            "Just once" means if your PC was off for 3 days, you get <strong>one</strong> fresh morning boost when you return, not three stale ones piled up.
           </p>
         </Field>
 
@@ -459,7 +459,7 @@ function ContactVerification({
 
   async function sendOtp() {
     if (!config.smtp?.host) {
-      toast.show('Set up and test your SMTP (email sending) first — the code is sent via your own email.', 'error');
+      toast.show('Set up and test your SMTP (email sending) first, the code is sent via your own email.', 'error');
       return;
     }
     setSending(true);

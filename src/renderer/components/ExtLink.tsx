@@ -9,7 +9,7 @@ interface ExtLinkProps {
 
 /**
  * Opens links in the user's default browser via Electron's shell.openExternal.
- * Use this instead of <a target="_blank"> — that doesn't work properly in Electron.
+ * Use this instead of <a target="_blank">, that does not work properly in Electron.
  */
 export function ExtLink({ href, children, showIcon = false, className = '' }: ExtLinkProps) {
   function handleClick(e: React.MouseEvent) {

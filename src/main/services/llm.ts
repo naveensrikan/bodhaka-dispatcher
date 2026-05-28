@@ -23,15 +23,13 @@ export interface ChatResult {
 }
 
 const MODELS: Record<Provider, string[]> = {
-  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo', 'gpt-3.5-turbo'],
+  openai: ['gpt-4o', 'gpt-4o-mini', 'gpt-4.1', 'gpt-4.1-mini'],
   anthropic: [
     'claude-opus-4-7',
     'claude-sonnet-4-6',
     'claude-haiku-4-5-20251001',
-    'claude-3-5-sonnet-latest',
-    'claude-3-5-haiku-latest',
   ],
-  gemini: ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest', 'gemini-2.0-flash-exp'],
+  gemini: ['gemini-1.5-flash-latest', 'gemini-1.5-pro-latest', 'gemini-2.0-flash'],
   ollama: ['llama3.2', 'llama3.1', 'qwen2.5', 'mistral', 'phi3'],
 };
 
@@ -39,15 +37,14 @@ const MODELS: Record<Provider, string[]> = {
 const PRICING: Record<string, [number, number]> = {
   'gpt-4o': [0.0025, 0.01],
   'gpt-4o-mini': [0.00015, 0.0006],
-  'gpt-4-turbo': [0.01, 0.03],
-  'gpt-3.5-turbo': [0.0005, 0.0015],
+  'gpt-4.1': [0.002, 0.008],
+  'gpt-4.1-mini': [0.0004, 0.0016],
   'claude-opus-4-7': [0.015, 0.075],
   'claude-sonnet-4-6': [0.003, 0.015],
-  'claude-haiku-4-5-20251001': [0.0008, 0.004],
-  'claude-3-5-sonnet-latest': [0.003, 0.015],
-  'claude-3-5-haiku-latest': [0.0008, 0.004],
+  'claude-haiku-4-5-20251001': [0.001, 0.005],
   'gemini-1.5-pro-latest': [0.00125, 0.005],
   'gemini-1.5-flash-latest': [0.000075, 0.0003],
+  'gemini-2.0-flash': [0.0001, 0.0004],
 };
 
 export function listProviderModels(provider: string): string[] {
@@ -83,7 +80,7 @@ export async function testProviderKey(provider: string, apiKey: string, ollamaUr
   } else if (provider === 'anthropic') {
     const client = new Anthropic({ apiKey });
     await client.messages.create({
-      model: 'claude-3-5-haiku-latest',
+      model: 'claude-haiku-4-5-20251001',
       max_tokens: 10,
       messages: [{ role: 'user', content: 'hi' }],
     });

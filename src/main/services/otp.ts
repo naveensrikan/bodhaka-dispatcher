@@ -1,14 +1,17 @@
 import { getDb } from '../db/database';
 import { sendEmail } from './email';
+import path from 'path';
+import fs from 'fs';
+import { app } from 'electron';
 
 /**
  * Email OTP verification. Codes are stored in-memory (per app session) with a
  * short expiry. We deliberately don't persist the code to disk.
  *
  * Flow:
- *  1. sendEmailOtp(email) — generates a 6-digit code, emails it via the user's
+ *  1. sendEmailOtp(email), generates a 6-digit code, emails it via the user's
  *     own SMTP, holds it in memory for 10 minutes.
- *  2. verifyEmailOtp(email, code) — checks the code; on success marks the email
+ *  2. verifyEmailOtp(email, code), checks the code; on success marks the email
  *     verified in config and locks it.
  */
 
@@ -34,17 +37,38 @@ export async function sendEmailOtp(email: string): Promise<{ ok: boolean; error?
   pending = { code, email, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 };
 
   const subject = 'Your Bodhaka Forge verification code';
-  const body = `Your verification code is: ${code}\n\nThis code expires in 10 minutes.\n\nIf you didn't request this, you can ignore this email.`;
+
+  // Locate the logo (works in dev and packaged app)
+  const candidates = [
+    path.join(process.resourcesPath || '', 'email-logo.png'),
+    path.join(__dirname, '..', '..', 'resources', 'email-logo.png'),
+    path.join(app.getAppPath(), 'resources', 'email-logo.png'),
+  ];
+  const logoPath = candidates.find((p) => { try { return fs.existsSync(p); } catch { return false; } });
+
+  const logoBlock = logoPath
+    ? `<img src="cid:bodhakalogo" alt="Bodhaka" width="64" height="64" style="display:block; margin:0 auto 12px;" />`
+    : '';
+
   const html = `
-    <div style="font-family: -apple-system, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-      <h2 style="color: #1e2a8a;">Verify your email</h2>
-      <p style="color: #5a5e75;">Enter this code in Bodhaka Forge to verify your email address:</p>
-      <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1a1d2e; background: #eef0f6; padding: 16px; text-align: center; border-radius: 8px; margin: 16px 0;">${code}</div>
-      <p style="color: #8a8fa6; font-size: 12px;">This code expires in 10 minutes. If you didn't request it, ignore this email.</p>
+    <div style="font-family: -apple-system, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; text-align: center;">
+      ${logoBlock}
+      <h2 style="color: #1e2a8a; margin: 0 0 4px;">Verify your email</h2>
+      <p style="color: #5a5e75; margin: 0 0 16px;">Enter this code in Bodhaka Forge to verify your email address:</p>
+      <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1a1d2e; background: #eef0f6; padding: 16px; border-radius: 8px; margin: 0 0 16px;">${code}</div>
+      <p style="color: #8a8fa6; font-size: 12px; margin: 0 0 16px;">This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>
+      <div style="border-top: 1px solid #e3e5ec; padding-top: 14px; color: #8a8fa6; font-size: 11px; line-height: 1.6;">
+        Please note: Bodhaka Forge is meant for your own personal, agentic learning use only. The agents you build are for you, and should not be used to send messages to other people.
+      </div>
     </div>`;
 
+  const text = `Your Bodhaka Forge verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request it, ignore this email.\n\nPlease note: Bodhaka Forge is for your own personal, agentic learning use only.`;
+
   try {
-    await sendEmail(email, subject, html, true);
+    const attachments = logoPath
+      ? [{ filename: 'logo.png', path: logoPath, cid: 'bodhakalogo' }]
+      : undefined;
+    await sendEmail(email, subject, html, true, attachments);
     return { ok: true };
   } catch (err: any) {
     return { ok: false, error: `Could not send code: ${err.message}. Check your SMTP settings.` };
@@ -61,7 +85,7 @@ export function verifyEmailOtp(email: string, code: string): { ok: boolean; erro
 
   if (pending.code !== code.trim()) return { ok: false, error: 'Incorrect code. Try again.' };
 
-  // Success — mark verified and lock in config
+  // Success, mark verified and lock in config
   const db = getDb();
   const row = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
   const contact = row ? JSON.parse(row.value) : {};

@@ -42,7 +42,7 @@ export function Onboarding() {
         </div>
 
         <p className="text-[13px] text-text-secondary dark:text-text-secondary-dark mb-6">
-          Design AI agents that work for you — daily study summaries, motivational messages,
+          Design AI agents that work for you, daily study summaries, motivational messages,
           research briefings, quiz generators, and more. All running locally on your machine,
           using your own API keys.
         </p>

@@ -4,7 +4,7 @@ export interface CurrencyInfo {
   symbol: string;
 }
 
-// Common currencies — code, full name, symbol
+// Common currencies: code, full name, symbol
 export const CURRENCIES: CurrencyInfo[] = [
   { code: 'USD', name: 'US Dollar', symbol: '$' },
   { code: 'INR', name: 'Indian Rupee', symbol: '₹' },

@@ -111,6 +111,7 @@ declare global {
         delete: (id: string) => Promise<{ success: boolean }>;
         duplicate: (id: string) => Promise<{ id: string }>;
         runNow: (id: string) => Promise<{ runId: string; status: string; error?: string }>;
+        memoryKeys: (id: string) => Promise<string[]>;
         getRuns: (id: string) => Promise<AgentRun[]>;
         getAllRuns: () => Promise<AgentRun[]>;
         export: (id: string) => Promise<{ exported: boolean; path?: string }>;
