@@ -61,6 +61,7 @@ const api = {
     forceQuit: () => ipcRenderer.invoke('app:forceQuit'),
     openLogs: () => ipcRenderer.invoke('app:openLogs'),
     updateChannel: () => ipcRenderer.invoke('app:updateChannel'),
+    getAnnouncements: () => ipcRenderer.invoke('app:getAnnouncements'),
   },
   catchup: {
     find: () => ipcRenderer.invoke('catchup:find'),

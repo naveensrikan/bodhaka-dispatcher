@@ -156,6 +156,7 @@ declare global {
         forceQuit: () => Promise<void>;
         openLogs: () => Promise<string>;
         updateChannel: () => Promise<'store' | 'github' | 'dev'>;
+        getAnnouncements: () => Promise<{ items: Array<{ id: string; date?: string; text: string }>; fromCache: boolean; fetchedAt: number | null }>;
       };
       catchup: {
         find: () => Promise<any[]>;

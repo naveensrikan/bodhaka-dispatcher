@@ -15,6 +15,7 @@ import { startScheduler } from './services/scheduler';
 import { findMissedRuns, runMissed } from './services/catchup';
 import { setupAutoUpdater } from './services/updater';
 import { logger, installCrashDiagnostics, getLogDir } from './services/logger';
+import { getAnnouncements } from './services/announcements';
 
 const isDev = process.env.NODE_ENV === 'development' || !!process.env.ELECTRON_RENDERER_URL;
 
@@ -260,6 +261,12 @@ if (!gotLock) {
         if (isWindowsStore) return 'store';   // MSIX: Microsoft Store handles updates
         if (isDev) return 'dev';              // dev: no updates
         return 'github';                      // .exe: electron-updater
+      });
+
+      // Remote announcements shown on the Dashboard (fetched from bodhaka.org)
+      ipcMain.handle('app:getAnnouncements', async () => {
+        try { return await getAnnouncements(); }
+        catch { return { items: [], fromCache: true, fetchedAt: null }; }
       });
 
       applyLaunchOnStartup();

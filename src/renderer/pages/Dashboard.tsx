@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Bot, Plus, Activity, BookOpen, Zap, Sparkles, ChevronRight, AlertCircle, CheckCircle2, DollarSign } from 'lucide-react';
 import { cronToHuman } from '../lib/cron';
+import { AnnouncementsCard } from '../components/AnnouncementsCard';
 import type { Agent, ConfigShape, Stats } from '../types/api';
 
 export function Dashboard() {
@@ -55,6 +56,8 @@ export function Dashboard() {
           Your AI agents, ready when you are.
         </p>
       </header>
+
+      <AnnouncementsCard />
 
       {hasScheduledAgents && (
         schedulingActive ? (
