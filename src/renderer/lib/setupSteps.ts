@@ -7,7 +7,7 @@ export const SETUP_STEPS: Record<string, { title: string; steps: SetupStep[] }> 
       { step: 1, text: 'Go to', link: { label: 'console.anthropic.com', href: 'https://console.anthropic.com' } },
       { step: 2, text: 'Sign up with email, Google, or GitHub. Verify your email.' },
       { step: 3, text: 'Click your profile (top right) → "API Keys".' },
-      { step: 4, text: 'Click "Create Key", name it (e.g. "Bodhaka Forge"), and copy the key (starts with sk-ant-...).' },
+      { step: 4, text: 'Click "Create Key", name it (e.g. "Bodhaka Dispatcher"), and copy the key (starts with sk-ant-...).' },
       { step: 5, text: 'Paste the key into the field below and click Test.' },
     ],
   },
@@ -46,7 +46,7 @@ export const SETUP_STEPS: Record<string, { title: string; steps: SetupStep[] }> 
     steps: [
       { step: 1, text: 'Enable 2-Step Verification on your Google account at', link: { label: 'myaccount.google.com/security', href: 'https://myaccount.google.com/security' } },
       { step: 2, text: 'Go to', link: { label: 'App Passwords', href: 'https://myaccount.google.com/apppasswords' } },
-      { step: 3, text: 'Type "Bodhaka Forge" as the app name and click Create.' },
+      { step: 3, text: 'Type "Bodhaka Dispatcher" as the app name and click Create.' },
       { step: 4, text: 'Google shows a 16-character password. Copy it (ignore the spaces).' },
       { step: 5, text: 'Below: Host = smtp.gmail.com, Port = 587, Username = your Gmail address, Password = the 16-char app password.' },
       { step: 6, text: 'Click "Test SMTP Connection", should show "Verified" inline.' },

@@ -21,7 +21,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
 
         <img src={aboutLogo} alt="Bodhaka" className="w-24 h-24 mx-auto mb-5" />
 
-        <h2 className="text-xl font-semibold tracking-tight mb-1">Bodhaka Forge</h2>
+        <h2 className="text-xl font-semibold tracking-tight mb-1">Bodhaka Dispatcher</h2>
         <p className="text-[12px] text-text-tertiary mb-5">Part of the Bodhaka product series</p>
 
         <div className="text-[13px] text-text-secondary dark:text-text-secondary-dark leading-relaxed space-y-3 text-left">
@@ -30,7 +30,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
             AI and its everyday use within reach of every student.
           </p>
           <p>
-            Bodhaka Forge lets students build their own AI study agents, so the technology becomes a
+            Bodhaka Dispatcher lets students build their own AI study agents, so the technology becomes a
             practical, personal learning companion rather than something distant.
           </p>
           <p>

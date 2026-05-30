@@ -36,7 +36,7 @@ export async function sendEmailOtp(email: string): Promise<{ ok: boolean; error?
   const code = generateCode();
   pending = { code, email, expiresAt: Date.now() + 10 * 60 * 1000, attempts: 0 };
 
-  const subject = 'Your Bodhaka Forge verification code';
+  const subject = 'Your Bodhaka Dispatcher verification code';
 
   // Locate the logo (works in dev and packaged app)
   const candidates = [
@@ -54,15 +54,15 @@ export async function sendEmailOtp(email: string): Promise<{ ok: boolean; error?
     <div style="font-family: -apple-system, 'Segoe UI', sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; text-align: center;">
       ${logoBlock}
       <h2 style="color: #1e2a8a; margin: 0 0 4px;">Verify your email</h2>
-      <p style="color: #5a5e75; margin: 0 0 16px;">Enter this code in Bodhaka Forge to verify your email address:</p>
+      <p style="color: #5a5e75; margin: 0 0 16px;">Enter this code in Bodhaka Dispatcher to verify your email address:</p>
       <div style="font-size: 32px; font-weight: 700; letter-spacing: 8px; color: #1a1d2e; background: #eef0f6; padding: 16px; border-radius: 8px; margin: 0 0 16px;">${code}</div>
       <p style="color: #8a8fa6; font-size: 12px; margin: 0 0 16px;">This code expires in 10 minutes. If you did not request it, you can ignore this email.</p>
       <div style="border-top: 1px solid #e3e5ec; padding-top: 14px; color: #8a8fa6; font-size: 11px; line-height: 1.6;">
-        Please note: Bodhaka Forge is meant for your own personal, agentic learning use only. The agents you build are for you, and should not be used to send messages to other people.
+        Please note: Bodhaka Dispatcher is meant for your own personal, agentic learning use only. The agents you build are for you, and should not be used to send messages to other people.
       </div>
     </div>`;
 
-  const text = `Your Bodhaka Forge verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request it, ignore this email.\n\nPlease note: Bodhaka Forge is for your own personal, agentic learning use only.`;
+  const text = `Your Bodhaka Dispatcher verification code is: ${code}\n\nThis code expires in 10 minutes. If you did not request it, ignore this email.\n\nPlease note: Bodhaka Dispatcher is for your own personal, agentic learning use only.`;
 
   try {
     const attachments = logoPath

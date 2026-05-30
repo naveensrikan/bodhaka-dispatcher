@@ -248,7 +248,7 @@ export function Configuration() {
 
       <Section icon={<Mail size={15} />} title="Your Contact Details (personal use only)">
         <div className="p-3 mb-1 rounded-win bg-warning/10 border border-warning/30 text-[12px] text-text-secondary dark:text-text-secondary-dark">
-          These are the <strong>only</strong> addresses your agents can send to. This keeps Bodhaka Forge a personal-use tool and prevents misuse for bulk messaging.
+          These are the <strong>only</strong> addresses your agents can send to. This keeps Bodhaka Dispatcher a personal-use tool and prevents misuse for bulk messaging.
         </div>
 
         <ContactVerification config={config} setConfig={setConfig} toast={toast} />
@@ -261,7 +261,7 @@ export function Configuration() {
             className="mt-0.5"
           />
           <span className="text-[12px] text-text-primary dark:text-text-primary-dark leading-relaxed">
-            I confirm that the email address and phone number above are <strong>my own</strong>, and that I will use Bodhaka Forge
+            I confirm that the email address and phone number above are <strong>my own</strong>, and that I will use Bodhaka Dispatcher
             and any agents I build <strong>solely for my personal learning</strong>, not for sending bulk or unsolicited messages to others.
           </span>
         </label>
@@ -380,7 +380,7 @@ export function Configuration() {
 
       <Section icon={<Clock size={15} />} title="Scheduling & Background Running">
         <div className="p-3 mb-1 rounded-win bg-brand-subtle dark:bg-brand-subtle-dark border border-brand/20 text-[12px] text-text-secondary dark:text-text-secondary-dark leading-relaxed">
-          <strong className="text-text-primary dark:text-text-primary-dark">How scheduling works:</strong> For scheduled agents to run, Bodhaka Forge must be running, either open, or minimized in the system tray. Turn on "Launch on startup" below so it's always ready whenever your PC is on. If it wasn't running at the scheduled time, it'll catch up when you next open it.
+          <strong className="text-text-primary dark:text-text-primary-dark">How scheduling works:</strong> For scheduled agents to run, Bodhaka Dispatcher must be running, either open, or minimized in the system tray. Turn on "Launch on startup" below so it's always ready whenever your PC is on. If it wasn't running at the scheduled time, it'll catch up when you next open it.
         </div>
         <p className="text-[12px] text-text-secondary -mt-1 mb-2">
           These settings help it stay running and catch up on anything missed while your PC was off.
@@ -436,7 +436,7 @@ export function Configuration() {
 
         <div className="p-3 rounded-win bg-bg-hover dark:bg-bg-dark-subtle text-[11px] text-text-secondary dark:text-text-secondary-dark">
           <AlertTriangle size={12} className="inline mr-1 text-warning" />
-          Honest note: no app can run while your PC is fully <strong>off</strong>. Scheduled agents fire only when your PC is on. If your PC was off at the scheduled time, Bodhaka Forge catches up the next time you turn it on. For guaranteed on-time delivery even when your PC is off, a cloud version would be needed.
+          Honest note: no app can run while your PC is fully <strong>off</strong>. Scheduled agents fire only when your PC is on. If your PC was off at the scheduled time, Bodhaka Dispatcher catches up the next time you turn it on. For guaranteed on-time delivery even when your PC is off, a cloud version would be needed.
         </div>
       </Section>
 

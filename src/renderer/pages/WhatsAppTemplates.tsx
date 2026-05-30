@@ -174,7 +174,7 @@ export function WhatsAppTemplates() {
             <div className="text-[12px] space-y-2 text-text-secondary dark:text-text-secondary-dark">
               <p className="font-medium text-text-primary dark:text-text-primary-dark">How this works:</p>
               <ol className="list-decimal pl-4 space-y-1">
-                <li>Click <strong>Provision templates</strong>. Bodhaka Forge creates all 8 templates on <strong>your</strong> Twilio account.</li>
+                <li>Click <strong>Provision templates</strong>. Bodhaka Dispatcher creates all 8 templates on <strong>your</strong> Twilio account.</li>
                 <li>Each template is submitted to Meta for approval. Most are approved within minutes.</li>
                 <li>Click <strong>Refresh status</strong> to check approval progress.</li>
                 <li>Once a template shows ✓ Approved, your agents can use it in the WhatsApp Send node.</li>

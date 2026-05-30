@@ -23,7 +23,7 @@ function resolveLogDir(): string {
   } catch { /* app not ready yet */ }
   // Fallback: a stable temp location so we never lose logging entirely
   try {
-    return path.join(os.tmpdir(), 'bodhaka-forge', 'logs');
+    return path.join(os.tmpdir(), 'bodhaka-dispatcher', 'logs');
   } catch {
     return path.join('.', 'logs');
   }
@@ -92,7 +92,7 @@ function rotateIfLarge() {
  */
 export function installCrashDiagnostics(getWindow: () => Electron.BrowserWindow | null) {
   rotateIfLarge();
-  logger.info(`=== Bodhaka Forge starting (v${app.getVersion()}, ${process.platform}, electron ${process.versions.electron}) ===`);
+  logger.info(`=== Bodhaka Dispatcher starting (v${app.getVersion()}, ${process.platform}, electron ${process.versions.electron}) ===`);
   logger.info(`log file location: ${logFile()}`);
 
   process.on('uncaughtException', (err) => {

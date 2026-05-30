@@ -36,7 +36,7 @@ export function Onboarding() {
         <div className="flex items-center gap-4 mb-4">
           <Logo size={56} />
           <div>
-            <h2 className="text-xl font-semibold">Welcome to Bodhaka Forge</h2>
+            <h2 className="text-xl font-semibold">Welcome to Bodhaka Dispatcher</h2>
             <p className="text-[11px] text-text-tertiary mt-0.5">Build your own AI agents.</p>
           </div>
         </div>

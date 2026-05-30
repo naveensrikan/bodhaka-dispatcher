@@ -318,7 +318,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
       const contactRow = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
       const contact = contactRow ? JSON.parse(contactRow.value) : {};
       const to = contact.email;  // always the user's verified email
-      const subject = node.data.subject || 'From your Bodhaka Forge agent';
+      const subject = node.data.subject || 'From your Bodhaka Dispatcher agent';
       if (!to) throw new Error('No verified email in Settings. Add and verify your email first.');
       const { renderEmailHtml } = require('./emailRender');
       const html = await renderEmailHtml(inputText, subject);
@@ -387,7 +387,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
       }
 
       try {
-        const outDir = path.join(app.getPath('documents'), 'Bodhaka Forge');
+        const outDir = path.join(app.getPath('documents'), 'Bodhaka Dispatcher');
         if (!fs.existsSync(outDir)) fs.mkdirSync(outDir, { recursive: true });
         const filepath = path.join(outDir, filename);
         fs.writeFileSync(filepath, inputText, 'utf-8');

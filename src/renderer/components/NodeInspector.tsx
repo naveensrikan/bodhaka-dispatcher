@@ -306,7 +306,7 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
                 {defaultEmail && <Check size={13} className="text-success" />}
               </div>
               <p className="hint">
-                Agents can only send to your own verified email. To change it, update and re-verify in Settings. This keeps Bodhaka Forge personal-use only.
+                Agents can only send to your own verified email. To change it, update and re-verify in Settings. This keeps Bodhaka Dispatcher personal-use only.
               </p>
             </div>
             <div>
@@ -326,7 +326,7 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
             <label className="label">Filename</label>
             <input className="input w-full" value={data.filename || ''} onChange={(e) => update({ filename: e.target.value })} placeholder="output.txt" />
             <p className="text-[11px] text-text-tertiary mt-1.5">
-              Saved to Documents/Bodhaka Forge/. Allowed file types: <b>.txt .md .csv .json .html .log</b> (other types are not allowed).
+              Saved to Documents/Bodhaka Dispatcher/. Allowed file types: <b>.txt .md .csv .json .html .log</b> (other types are not allowed).
             </p>
             {(() => {
               const fn = (data.filename || '').trim().toLowerCase();

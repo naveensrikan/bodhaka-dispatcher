@@ -66,7 +66,7 @@ export function Dashboard() {
               <CheckCircle2 size={14} className="text-success" />
             </div>
             <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark">
-              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling active.</strong> Bodhaka Forge launches on startup and runs in the tray, so your scheduled agents fire whenever your PC is on.
+              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling active.</strong> Bodhaka Dispatcher launches on startup and runs in the tray, so your scheduled agents fire whenever your PC is on.
             </div>
           </div>
         ) : (
@@ -75,7 +75,7 @@ export function Dashboard() {
               <AlertCircle size={14} className="text-warning" />
             </div>
             <div className="text-[12px] text-text-secondary dark:text-text-secondary-dark flex-1">
-              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling only works while the app is open.</strong> Your agents won't run on time if Bodhaka Forge is closed. Turn on "Launch on startup" in Settings so it's always ready when your PC is on.
+              <strong className="text-text-primary dark:text-text-primary-dark">Scheduling only works while the app is open.</strong> Your agents won't run on time if Bodhaka Dispatcher is closed. Turn on "Launch on startup" in Settings so it's always ready when your PC is on.
             </div>
             <ChevronRight size={14} className="text-text-tertiary shrink-0" />
           </Link>

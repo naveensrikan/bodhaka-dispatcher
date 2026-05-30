@@ -6,7 +6,7 @@ import path from 'path';
  * Remote announcements shown on the Dashboard.
  *
  * Source of truth is a JSON file you control:
- *   https://bodhaka.org/bodhaka-forge/announcements.json
+ *   https://bodhaka.org/bodhaka-dispatcher/announcements.json
  *
  * To add an announcement: add an entry to the "announcements" array.
  * To remove one: delete its entry. The app mirrors the file exactly, so on the
@@ -23,7 +23,7 @@ import path from 'path';
  * already uses a markdown component.
  */
 
-const ANNOUNCEMENTS_URL = 'https://bodhaka.org/bodhaka-forge/announcements.json';
+const ANNOUNCEMENTS_URL = 'https://bodhaka.org/bodhaka-dispatcher/announcements.json';
 
 export interface Announcement {
   id: string;

@@ -60,7 +60,7 @@ export function App() {
         <div className="titlebar gap-2.5">
           <Logo size={26} />
           <div className="leading-none no-drag flex flex-col">
-            <span className="text-[13px] font-semibold tracking-tight">Bodhaka Forge</span>
+            <span className="text-[13px] font-semibold tracking-tight">Bodhaka Dispatcher</span>
             <span className="text-[9px] text-text-tertiary mt-0.5 uppercase tracking-widest">Build AI Agents</span>
           </div>
         </div>
@@ -86,7 +86,7 @@ export function App() {
 
           <div className="pt-3 mt-3 border-t border-border dark:border-border-dark">
             <button
-              onClick={() => window.api.shell.openExternal('https://bodhaka.org/bodhaka-forge')}
+              onClick={() => window.api.shell.openExternal('https://bodhaka.org/bodhaka-dispatcher')}
               className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-win text-[13px] text-text-primary dark:text-text-primary-dark hover:bg-bg-hover dark:hover:bg-bg-dark-subtle transition-colors"
             >
               <HelpCircle size={15} strokeWidth={1.75} />
@@ -126,7 +126,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v1.1.5</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v1.2.0</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"

@@ -9,7 +9,7 @@ import 'katex/contrib/mhchem';
  * `marked` v14 is ESM-only, so we load it via dynamic import (works from our
  * CommonJS-compiled main process).
  */
-export async function renderEmailHtml(markdown: string, title = 'From Bodhaka Forge'): Promise<string> {
+export async function renderEmailHtml(markdown: string, title = 'From Bodhaka Dispatcher'): Promise<string> {
   const { marked } = await import('marked');
 
   // Render math to HTML before markdown processing.

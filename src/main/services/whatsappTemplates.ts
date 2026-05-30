@@ -1,7 +1,7 @@
 /**
  * WhatsApp Business template specifications.
  *
- * Shipped with Bodhaka Forge, auto-created on the student's own Twilio account.
+ * Shipped with Bodhaka Dispatcher, auto-created on the student's own Twilio account.
  *
  * CRITICAL Meta rules learned from approval failures:
  *  - A template body MUST NOT start or end with a variable ({{1}}).

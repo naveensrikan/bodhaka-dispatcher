@@ -96,7 +96,7 @@ function createWindow() {
     minWidth: 1100,
     minHeight: 700,
     backgroundColor: '#f4f5f9',
-    title: 'Bodhaka Forge',
+    title: 'Bodhaka Dispatcher',
     icon: iconPath(),
     autoHideMenuBar: true,
     show: false,
@@ -137,9 +137,9 @@ function createWindow() {
       buttons: ['Cancel', 'Minimize to tray'],
       defaultId: 1,
       cancelId: 0,
-      title: 'Close Bodhaka Forge?',
+      title: 'Close Bodhaka Dispatcher?',
       message: 'Are you sure you want to close the window?',
-      detail: 'Bodhaka Forge will keep running quietly in the system tray so your scheduled agents still run. You can reopen it from the tray icon, or fully quit from there.',
+      detail: 'Bodhaka Dispatcher will keep running quietly in the system tray so your scheduled agents still run. You can reopen it from the tray icon, or fully quit from there.',
     });
     if (choice === 1) {
       mainWindow?.hide();
@@ -158,8 +158,8 @@ function confirmQuit(): boolean {
     buttons: ['Cancel', 'Close anyway'],
     defaultId: 0,
     cancelId: 0,
-    title: 'Close Bodhaka Forge?',
-    message: 'Are you sure you want to close Bodhaka Forge?',
+    title: 'Close Bodhaka Dispatcher?',
+    message: 'Are you sure you want to close Bodhaka Dispatcher?',
     detail: 'Any unsaved changes (an open canvas or settings you have not saved) will be lost. Scheduled agents will not run while the app is fully closed.',
   };
   const choice = win ? dialog.showMessageBoxSync(win, opts) : dialog.showMessageBoxSync(opts);
@@ -180,10 +180,10 @@ function createTray() {
     if (!img.isEmpty()) img = img.resize({ width: 16, height: 16 });
   }
   tray = new Tray(img.isEmpty() ? nativeImage.createEmpty() : img);
-  tray.setToolTip('Bodhaka Forge');
+  tray.setToolTip('Bodhaka Dispatcher');
 
   const menu = Menu.buildFromTemplate([
-    { label: 'Open Bodhaka Forge', click: () => { if (mainWindow) { mainWindow.show(); } else createWindow(); } },
+    { label: 'Open Bodhaka Dispatcher', click: () => { if (mainWindow) { mainWindow.show(); } else createWindow(); } },
     { label: 'Run due agents now', click: async () => { await doCatchUp(true); } },
     { type: 'separator' },
     { label: 'Quit', click: () => {
@@ -218,7 +218,7 @@ async function doCatchUp(force = false) {
     const missed = findMissedRuns();
     if (missed.length === 0) {
       if (force) {
-        new Notification({ title: 'Bodhaka Forge', body: 'No agents are due right now.' }).show();
+        new Notification({ title: 'Bodhaka Dispatcher', body: 'No agents are due right now.' }).show();
       }
       return;
     }
@@ -226,14 +226,14 @@ async function doCatchUp(force = false) {
     if (force || prefs.catchUpMode === 'auto') {
       const ran = await runMissed(missed, prefs.missedPolicy === 'skip' && force ? 'recent' : prefs.missedPolicy);
       if (ran > 0) {
-        new Notification({ title: 'Bodhaka Forge', body: `Ran ${ran} catch-up agent${ran > 1 ? 's' : ''} that were missed while your PC was off.` }).show();
+        new Notification({ title: 'Bodhaka Dispatcher', body: `Ran ${ran} catch-up agent${ran > 1 ? 's' : ''} that were missed while your PC was off.` }).show();
       }
     } else {
       // Ask mode: notify and let the renderer show the review UI
       const total = missed.reduce((s, m) => s + m.missedCount, 0);
       new Notification({
         title: 'Missed scheduled agents',
-        body: `${missed.length} agent${missed.length > 1 ? 's' : ''} (${total} run${total > 1 ? 's' : ''}) were missed while your PC was off. Open Bodhaka Forge to review.`,
+        body: `${missed.length} agent${missed.length > 1 ? 's' : ''} (${total} run${total > 1 ? 's' : ''}) were missed while your PC was off. Open Bodhaka Dispatcher to review.`,
       }).show();
       // Push to renderer if open
       mainWindow?.webContents.send('catchup:missed', missed);
@@ -253,7 +253,7 @@ if (!gotLock) {
   });
 
   app.whenReady().then(async () => {
-    if (process.platform === 'win32') app.setAppUserModelId('Bodhaka Forge');
+    if (process.platform === 'win32') app.setAppUserModelId('Bodhaka Dispatcher');
 
     installCrashDiagnostics(() => mainWindow);
 

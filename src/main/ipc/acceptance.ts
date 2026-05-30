@@ -16,7 +16,7 @@ interface Acceptance {
 }
 
 function getAcceptancePath(): string {
-  // App's user data folder (AppData/Roaming/Bodhaka Forge on Windows)
+  // App's user data folder (AppData/Roaming/Bodhaka Dispatcher on Windows)
   return path.join(app.getPath('userData'), ACCEPTANCE_FILE);
 }
 

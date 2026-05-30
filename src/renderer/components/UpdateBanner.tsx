@@ -29,7 +29,7 @@ export function UpdateBanner() {
         </div>
         <div className="flex-1 min-w-0">
           <div className="text-white font-semibold text-[14px]">
-            A new version of Bodhaka Forge is available (v{available.version})
+            A new version of Bodhaka Dispatcher is available (v{available.version})
           </div>
           <div className="text-white/80 text-[12px]">
             {downloading

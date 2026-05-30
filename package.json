@@ -1,11 +1,11 @@
 {
-  "name": "bodhaka-forge",
-  "version": "1.1.5",
-  "description": "Bodhaka Forge — Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
+  "name": "bodhaka-dispatcher",
+  "version": "1.2.0",
+  "description": "Bodhaka Dispatcher \u2014 Build your own AI agents. A product of BuoyantWave Learning Technologies LLP.",
   "main": "dist/main/index.js",
   "author": "BuoyantWave Learning Technologies LLP",
   "license": "Proprietary",
-  "homepage": "https://bodhaka.org/bodhaka-forge",
+  "homepage": "https://bodhaka.org/bodhaka-dispatcher",
   "scripts": {
     "dev": "concurrently -k \"npm:dev:*\"",
     "dev:vite": "vite",
@@ -64,8 +64,8 @@
     "wait-on": "^8.0.1"
   },
   "build": {
-    "appId": "org.bodhaka.forge",
-    "productName": "Bodhaka Forge",
+    "appId": "org.bodhaka.dispatcher",
+    "productName": "Bodhaka Dispatcher",
     "publish": [
       {
         "provider": "github",
@@ -110,31 +110,37 @@
       "target": [
         {
           "target": "nsis",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         },
         {
           "target": "appx",
-          "arch": ["x64"]
+          "arch": [
+            "x64"
+          ]
         }
       ],
       "icon": "resources/icon.ico",
       "artifactName": "${productName}-Setup-${version}.${ext}"
     },
     "appx": {
-      "identityName": "BuoyantWaveLearningTechno.BodhakaForge",
+      "identityName": "BuoyantWaveLearningTechno.BodhakaDispatcher",
       "publisher": "CN=F4B9E2E3-2156-4114-9AE3-9011697860ED",
       "publisherDisplayName": "BuoyantWave Learning Technologies",
-      "applicationId": "BodhakaForge",
-      "displayName": "Bodhaka Forge",
+      "applicationId": "BodhakaDispatcher",
+      "displayName": "Bodhaka Dispatcher",
       "backgroundColor": "#1e2a8a",
-      "languages": ["en-US"]
+      "languages": [
+        "en-US"
+      ]
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "Bodhaka Forge",
+      "shortcutName": "Bodhaka Dispatcher",
       "installerIcon": "resources/icon.ico",
       "uninstallerIcon": "resources/icon.ico",
       "include": "resources/uninstaller.nsh"

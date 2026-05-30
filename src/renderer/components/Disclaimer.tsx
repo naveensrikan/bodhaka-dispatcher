@@ -44,7 +44,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
         <div className="p-6 border-b border-border dark:border-border-dark flex items-center gap-4">
           <Logo size={48} />
           <div>
-            <h2 className="text-xl font-semibold">Welcome to Bodhaka Forge</h2>
+            <h2 className="text-xl font-semibold">Welcome to Bodhaka Dispatcher</h2>
             <p className="text-[12px] text-text-secondary dark:text-text-secondary-dark mt-0.5">
               Please read and accept the terms below to continue.
             </p>
@@ -59,7 +59,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           <section>
             <h3 className="font-semibold text-brand mb-1.5">1. Acceptance of Terms</h3>
             <p>
-              By installing, accessing, or using Bodhaka Forge ("the Software"), a product of
+              By installing, accessing, or using Bodhaka Dispatcher ("the Software"), a product of
               <strong> BuoyantWave Learning Technologies LLP</strong> ("the Company"), you ("the User") agree to be bound by
               these Terms of Use and the Disclaimer set out below. If you do not agree to these terms,
               you must not install or use the Software.
@@ -69,7 +69,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           <section>
             <h3 className="font-semibold text-brand mb-1.5">2. Permitted Use</h3>
             <p>
-              Bodhaka Forge is provided strictly for <strong>personal, non-commercial educational use</strong> by individual students,
+              Bodhaka Dispatcher is provided strictly for <strong>personal, non-commercial educational use</strong> by individual students,
               learners, and educators. Permitted uses include:
             </p>
             <ul className="list-disc pl-5 mt-1.5 space-y-0.5">
@@ -82,7 +82,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
           <section>
             <h3 className="font-semibold text-brand mb-1.5">3. Strictly Personal Use, No Bulk Messaging</h3>
             <p>
-              Bodhaka Forge is a <strong>personal-use-only application intended solely for your own learning and education</strong>.
+              Bodhaka Dispatcher is a <strong>personal-use-only application intended solely for your own learning and education</strong>.
               You agree that you will <strong>NOT</strong> use the Software, or any agent built with it, to send bulk, automated,
               unsolicited, or mass email or WhatsApp messages to any third party. The email address and phone number you configure
               are restricted to your own verified contact details, and agents may only deliver messages to you.
@@ -195,7 +195,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
 
           <section className="pt-2 border-t border-border dark:border-border-dark">
             <p className="text-[12px] text-text-secondary dark:text-text-secondary-dark italic">
-              Bodhaka Forge is a product of BuoyantWave Learning Technologies LLP. By continuing, you confirm that you have
+              Bodhaka Dispatcher is a product of BuoyantWave Learning Technologies LLP. By continuing, you confirm that you have
               read, understood, and agree to all the terms above, and that you will use the Software responsibly and lawfully.
             </p>
           </section>
@@ -217,7 +217,7 @@ export function Disclaimer({ onAccepted }: DisclaimerProps) {
               className="mt-0.5"
             />
             <span className="text-[13px] text-text-primary dark:text-text-primary-dark leading-relaxed">
-              I have read and agree to the Terms of Use and Disclaimer above. I will use Bodhaka Forge solely for
+              I have read and agree to the Terms of Use and Disclaimer above. I will use Bodhaka Dispatcher solely for
               personal educational purposes and will not use it for any unlawful or harmful purpose.
             </span>
           </label>
