@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import aboutLogo from '../assets/about-logo.png';
+import aboutLogo from '../assets/about-logo.svg';
 
 export function AboutModal({ onClose }: { onClose: () => void }) {
   return (
