@@ -19,7 +19,7 @@ export function AboutModal({ onClose }: { onClose: () => void }) {
           <X size={18} />
         </button>
 
-        <img src={aboutLogo} alt="Bodhaka" className="w-24 h-24 mx-auto mb-5" />
+        <img src={aboutLogo} alt="Bodhaka" className="h-24 w-auto mx-auto mb-5" />
 
         <h2 className="text-xl font-semibold tracking-tight mb-1">Bodhaka Dispatcher</h2>
         <p className="text-[12px] text-text-tertiary mb-5">Part of the Bodhaka product series</p>
