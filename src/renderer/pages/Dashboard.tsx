@@ -168,8 +168,8 @@ export function Dashboard() {
 
       <section>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-semibold text-sm">Your Agents</h2>
-          {agents.length > 0 && <Link to="/agents" className="text-[12px] text-accent hover:underline">View all →</Link>}
+          <h2 className="font-semibold text-sm" style={{ color: '#ffffff' }}>Your Agents</h2>
+          {agents.length > 0 && <Link to="/agents" className="text-[12px] hover:underline" style={{ color: '#ffffff' }}>View all →</Link>}
         </div>
 
         {agents.length === 0 ? (
