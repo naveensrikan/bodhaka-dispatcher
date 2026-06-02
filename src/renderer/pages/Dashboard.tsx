@@ -49,10 +49,10 @@ export function Dashboard() {
     <div className="dashboard-animated-bg min-h-full">
       <div className="p-8 max-w-6xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-2xl font-semibold tracking-tight mb-1">
+        <h1 className="text-2xl font-semibold tracking-tight mb-1" style={{ color: '#ffffff' }}>
           {config?.profile?.name ? `Welcome back, ${config.profile.name.split(' ')[0]}` : 'Welcome'}
         </h1>
-        <p className="text-text-secondary dark:text-text-secondary-dark text-[13px]">
+        <p className="text-[13px]" style={{ color: '#ffffff' }}>
           Your AI agents, ready when you are.
         </p>
       </header>

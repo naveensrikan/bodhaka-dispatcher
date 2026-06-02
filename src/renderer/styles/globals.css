@@ -203,22 +203,24 @@ html.dark .react-flow__handle { background: #181d33 !important; }
   100% { background-position:   0% 50%; }
 }
 
+/*
+ * Dashboard background: deep charcoal with extremely fine white noise.
+ * The noise is a tiny SVG `<feTurbulence>` pattern, inlined as a data URL,
+ * so it never makes a network request and renders at any DPI without going
+ * blurry. baseFrequency=0.9 is the high end — produces VERY fine grain, not
+ * visible dots. Opacity is low so it reads as subtle texture, not a pattern.
+ */
 .dashboard-animated-bg {
-  background: linear-gradient(120deg, #d6f5e3, #cdeafc, #eaf7c9, #d2f0ea, #e8f9d4);
-  background-size: 300% 300%;
-  animation: bodhakaGradientShift 18s ease infinite;
+  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
-/* Slightly deeper tints in dark mode so text stays readable */
+/* Dark mode: keep the same charcoal + noise; it already reads dark */
 html.dark .dashboard-animated-bg {
-  background: linear-gradient(120deg, #16302a, #15293f, #232e1c, #16302e, #1d3320);
-  background-size: 300% 300%;
-  animation: bodhakaGradientShift 18s ease infinite;
-}
-
-/* Respect reduced-motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .dashboard-animated-bg { animation: none; }
+  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1   0 0 0 0 1   0 0 0 0 1   0 0 0 0.18 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
 }
 
 /* Announcement markdown: keep paragraphs tight so each reads as one line */
