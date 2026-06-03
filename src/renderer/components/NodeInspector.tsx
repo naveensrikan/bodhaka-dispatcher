@@ -78,6 +78,21 @@ export function NodeInspector({ node, agentId, onChange, onClose, knowledgeDocs,
           <p className="hint">A friendly name for this block, so you can recognize it on the canvas.</p>
         </div>
 
+        {/* Positive, friendly reminder for any block that sends a prompt to AI
+            or processes content that will reach the AI. Kept short and warm. */}
+        {['userInput', 'knowledgeBase', 'webSearch', 'llmPrompt', 'summarize', 'generateQuiz'].includes(node.type) && (
+          <div
+            className="rounded-win p-2.5 text-[11.5px] leading-relaxed"
+            style={{
+              background: '#fff5f5',
+              border: '1px solid #d83b3b',
+              color: '#7a1f1f',
+            }}
+          >
+            Please keep your prompts focused on learning and education, and use kind, respectful language. This helps the AI give you the most useful answers and keeps your study experience positive.
+          </div>
+        )}
+
         {node.type === 'scheduleTrigger' && (
           <div>
             <label className="label">Schedule</label>

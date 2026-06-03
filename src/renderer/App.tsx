@@ -8,6 +8,7 @@ import { Onboarding } from './components/Onboarding';
 import { Disclaimer } from './components/Disclaimer';
 import { MissedRunsBanner } from './components/MissedRunsBanner';
 import { UpdateBanner } from './components/UpdateBanner';
+import { AISafetyNotice } from './components/AISafetyNotice';
 import { AboutModal } from './components/AboutModal';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { Logo } from './components/Logo';
@@ -126,7 +127,7 @@ export function App() {
         {/* Footer */}
         <div className="px-3 py-2.5 border-t border-border dark:border-border-dark no-drag space-y-1.5">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] text-text-tertiary font-mono">v1.2.1</span>
+            <span className="text-[10px] text-text-tertiary font-mono">v1.2.2</span>
             <button
               onClick={toggleTheme}
               className="p-1.5 rounded-win hover:bg-bg-hover dark:hover:bg-bg-dark-subtle text-text-secondary"
@@ -149,6 +150,7 @@ export function App() {
         <div className="flex-1 overflow-auto">
           <UpdateBanner />
           <MissedRunsBanner />
+          <AISafetyNotice />
           <ErrorBoundary>
             <Outlet />
           </ErrorBoundary>

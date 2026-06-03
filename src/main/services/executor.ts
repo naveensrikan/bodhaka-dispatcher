@@ -9,6 +9,7 @@ import { sendWhatsApp } from './whatsapp';
 import { sendTemplatedWhatsApp } from './whatsappProvisioning';
 import { searchWeb } from './search';
 import { broadcastRunUpdate } from '../ipc/execution';
+import { checkContentSafety, safetyBlockMessage } from './contentSafety';
 
 interface FlowNode {
   id: string;
@@ -44,6 +45,23 @@ function log(ctx: RunContext, msg: string) {
   ctx.logs.push(line);
   console.log(`[run ${ctx.runId.slice(0, 8)}] ${msg}`);
   broadcastRunUpdate({ runId: ctx.runId, type: 'log', message: line });
+}
+
+/**
+ * Run content safety on a piece of text. If it fails, throw with a friendly
+ * message so the agent run is stopped before anything is delivered (email,
+ * WhatsApp, file, or displayed). Logs the block reason but never logs the
+ * full unsafe text (privacy + log hygiene).
+ */
+function enforceSafe(ctx: RunContext, text: string, where: string): void {
+  const result = checkContentSafety(text);
+  if (!result.safe) {
+    log(ctx, `  ✗ content blocked at ${where} (${result.reason})`);
+    try {
+      require('./logger').logger.warn(`content safety block at ${where}: reason="${result.reason}"`);
+    } catch { /* ignore */ }
+    throw new Error(safetyBlockMessage(result.reason));
+  }
 }
 
 /**
@@ -314,6 +332,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'sendEmail': {
+      enforceSafe(ctx, inputText, 'email send');
       const db = getDb();
       const contactRow = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
       const contact = contactRow ? JSON.parse(contactRow.value) : {};
@@ -328,6 +347,13 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'sendWhatsApp': {
+      // Check all text that may be transmitted, including any "fixed" varMap values
+      enforceSafe(ctx, inputText, 'WhatsApp send');
+      if (node.data.varMap && typeof node.data.varMap === 'object') {
+        for (const conf of Object.values(node.data.varMap as Record<string, { mode: 'ai' | 'fixed'; value?: string }>)) {
+          if (conf.mode === 'fixed' && conf.value) enforceSafe(ctx, conf.value, 'WhatsApp variable');
+        }
+      }
       const db = getDb();
       const contactRow = db.prepare('SELECT value FROM config WHERE key = ?').get('contact') as { value: string } | undefined;
       const contact = contactRow ? JSON.parse(contactRow.value) : {};
@@ -366,6 +392,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
     }
 
     case 'saveToFile': {
+      enforceSafe(ctx, inputText, 'save to file');
       // Only allow safe, plain-text document types. Block anything else
       // (executables, scripts, etc.) so the app can never create risky files.
       const ALLOWED_EXT = ['txt', 'md', 'csv', 'json', 'html', 'log'];
@@ -403,6 +430,7 @@ async function executeNode(node: FlowNode, def: AgentDefinition, ctx: RunContext
 
     case 'displayResult':
     case 'output':
+      enforceSafe(ctx, inputText, 'display result');
       return inputText;
 
     default:
